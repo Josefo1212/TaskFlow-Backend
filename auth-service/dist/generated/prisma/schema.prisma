@@ -1,0 +1,100 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model activity_logs {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id    String    @db.Uuid
+  project_id String?   @db.Uuid
+  task_id    String?   @db.Uuid
+  action     String    @db.VarChar(100)
+  metadata   Json?
+  created_at DateTime? @default(now()) @db.Timestamp(6)
+  projects   projects? @relation(fields: [project_id], references: [id], onUpdate: NoAction, map: "fk_log_project")
+  tasks      tasks?    @relation(fields: [task_id], references: [id], onUpdate: NoAction, map: "fk_log_task")
+  users      users     @relation(fields: [user_id], references: [id], onDelete: SetNull, onUpdate: NoAction, map: "fk_log_user")
+}
+
+model project_members {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  project_id String    @db.Uuid
+  user_id    String    @db.Uuid
+  role       String    @db.VarChar(50)
+  created_at DateTime? @default(now()) @db.Timestamp(6)
+  projects   projects  @relation(fields: [project_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_pm_project")
+  users      users     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_pm_user")
+
+  @@unique([project_id, user_id], map: "idx_project_user_unique")
+}
+
+model projects {
+  id              String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  owner_id        String            @db.Uuid
+  name            String            @db.VarChar(255)
+  description     String?
+  created_at      DateTime?         @default(now()) @db.Timestamp(6)
+  updated_at      DateTime?         @default(now()) @db.Timestamp(6)
+  activity_logs   activity_logs[]
+  project_members project_members[]
+  users           users             @relation(fields: [owner_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_project_owner")
+  tasks           tasks[]
+}
+
+model tags {
+  id         String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  owner_id   String      @db.Uuid
+  name       String      @db.VarChar(255)
+  color      String?     @db.VarChar(20)
+  created_at DateTime?   @default(now()) @db.Timestamp(6)
+  users      users       @relation(fields: [owner_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_tag_owner")
+  task_tags  task_tags[]
+}
+
+model task_tags {
+  id      String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  task_id String @db.Uuid
+  tag_id  String @db.Uuid
+  tags    tags   @relation(fields: [tag_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_tt_tag")
+  tasks   tasks  @relation(fields: [task_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_tt_task")
+
+  @@unique([task_id, tag_id], map: "idx_task_tag_unique")
+}
+
+model tasks {
+  id                             String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  project_id                     String          @db.Uuid
+  creator_id                     String          @db.Uuid
+  assignee_id                    String?         @db.Uuid
+  title                          String          @db.VarChar(255)
+  description                    String?
+  status                         String?         @default("todo") @db.VarChar(50)
+  priority                       String?         @default("medium") @db.VarChar(50)
+  due_date                       DateTime?       @db.Date
+  created_at                     DateTime?       @default(now()) @db.Timestamp(6)
+  updated_at                     DateTime?       @default(now()) @db.Timestamp(6)
+  activity_logs                  activity_logs[]
+  task_tags                      task_tags[]
+  users_tasks_assignee_idTousers users?          @relation("tasks_assignee_idTousers", fields: [assignee_id], references: [id], onUpdate: NoAction, map: "fk_task_assignee")
+  users_tasks_creator_idTousers  users           @relation("tasks_creator_idTousers", fields: [creator_id], references: [id], onDelete: SetNull, onUpdate: NoAction, map: "fk_task_creator")
+  projects                       projects        @relation(fields: [project_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_task_project")
+}
+
+model users {
+  id                             String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email                          String            @unique @db.VarChar(255)
+  password_hash                  String
+  name                           String            @db.VarChar(255)
+  created_at                     DateTime?         @default(now()) @db.Timestamp(6)
+  updated_at                     DateTime?         @default(now()) @db.Timestamp(6)
+  activity_logs                  activity_logs[]
+  project_members                project_members[]
+  projects                       projects[]
+  tags                           tags[]
+  tasks_tasks_assignee_idTousers tasks[]           @relation("tasks_assignee_idTousers")
+  tasks_tasks_creator_idTousers  tasks[]           @relation("tasks_creator_idTousers")
+}

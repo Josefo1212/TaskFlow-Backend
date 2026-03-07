@@ -1,19 +1,12 @@
-import express from 'express';
-import dotenv from 'dotenv';
-import { Pool } from 'pg';
-dotenv.config();
-const app = express();
-app.use(express.json());
-// Configuración de la base de datos
-export const db = new Pool({
-    host: process.env.DB_HOST,
-    port: Number(process.env.DB_PORT),
-    database: process.env.DB_NAME,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-});
-db.connect()
-    .then(() => console.log('Connected to PostgreSQL'))
-    .catch((err) => console.error('Database connection error:', err));
-export default app;
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = __importDefault(require("express"));
+const dotenv_1 = __importDefault(require("dotenv"));
+dotenv_1.default.config();
+const app = (0, express_1.default)();
+app.use(express_1.default.json());
+exports.default = app;
 //# sourceMappingURL=app.js.map

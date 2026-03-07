@@ -1,0 +1,32 @@
+services:
+  db:
+    container_name: tasksflow_db
+    image: postgres:18-alpine
+    restart: always
+    environment:
+      POSTGRES_DB: taskflow_db
+      POSTGRES_USER: taskflow_user
+      POSTGRES_PASSWORD: taskflow_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  auth-service:
+    container_name: auth-service
+    image: josefo1212/auth-service:latest
+    depends_on:
+      - db
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: taskflow_db
+      DB_USER: taskflow_user
+      DB_PASSWORD: taskflow_pass
+      PORT: 3001
+    ports:
+      - "3001:3001"
+
+volumes:
+  db_data:

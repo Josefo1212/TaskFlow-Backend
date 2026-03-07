@@ -1,5 +1,4 @@
-import { Pool } from 'pg';
-declare const app: import("express-serve-static-core").Express;
-export declare const db: Pool;
+import express from 'express';
+declare const app: express.Application;
 export default app;
 //# sourceMappingURL=app.d.ts.map

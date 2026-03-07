@@ -1,10 +1,7 @@
-import app from './app.js';
-import dotenv from 'dotenv';
+import app from './app';
 
-dotenv.config();
-
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
-	console.log(`Auth service running on port ${PORT}`);
+  console.log(`Auth service running on port ${PORT}`);
 });
