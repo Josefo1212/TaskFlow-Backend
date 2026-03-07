@@ -1,4 +1,25 @@
+import { randomBytes } from 'crypto';
+import bcrypt from 'bcryptjs';
+import {
+	createAuthLog,
+	createSession,
+	createUser,
+	deactivateSessionByRefreshToken,
+	findActiveSessionByRefreshToken,
+	findUserByEmail,
+} from '../queries/auth.queries';
+
+const jwt: any = require('jsonwebtoken');
+
 // --- Tipos ---
+export interface RegisterInput {
+	name: string;
+	email: string;
+	password: string;
+	ip: string | null;
+	userAgent: string | null;
+}
+
 export interface LoginInput {
 	email: string;
 	password: string;
@@ -10,7 +31,8 @@ export interface LogoutInput {
 	refreshToken: string;
 	ip: string | null;
 }
-export interface LoginResult {
+
+export interface AuthSessionResult {
 	user: {
 		id: string;
 		email: string;
@@ -22,6 +44,9 @@ export interface LoginResult {
 	sessionId: string;
 }
 
+export type RegisterResult = AuthSessionResult;
+export type LoginResult = AuthSessionResult;
+
 export interface LogoutResult {
 	message: string;
 }
@@ -29,6 +54,7 @@ export interface LogoutResult {
 // --- Errores ---
 export class AuthServiceError extends Error {
 	statusCode: number;
+
 	constructor(message: string, statusCode: number) {
 		super(message);
 		this.statusCode = statusCode;
@@ -47,7 +73,9 @@ export function getAuthRuntimeConfig(): AuthRuntimeConfig {
 	if (!jwtSecret) {
 		throw new AuthServiceError('JWT_SECRET is not configured', 500);
 	}
+
 	const refreshTokenTtlDays = Number(process.env.REFRESH_TOKEN_TTL_DAYS ?? 7);
+
 	return {
 		jwtSecret,
 		jwtAccessExpiresIn: process.env.JWT_ACCESS_EXPIRES_IN ?? '15m',
@@ -56,9 +84,6 @@ export function getAuthRuntimeConfig(): AuthRuntimeConfig {
 }
 
 // --- Token ---
-import { randomBytes } from 'crypto';
-const jwt: any = require('jsonwebtoken');
-
 interface AccessTokenPayload {
 	sub: string;
 	email: string;
@@ -80,14 +105,89 @@ export function generateRefreshToken(): string {
 export function calculateRefreshExpiration(ttlDays: number): Date {
 	return new Date(Date.now() + ttlDays * 24 * 60 * 60 * 1000);
 }
-import bcrypt from 'bcryptjs';
-import {
-	createAuthLog,
-	createSession,
-	deactivateSessionByRefreshToken,
-	findActiveSessionByRefreshToken,
-	findUserByEmail,
-} from '../queries/auth.queries';
+
+async function createSessionWithTokens(params: {
+	user: { id: string; email: string; name: string };
+	ip: string | null;
+	userAgent: string | null;
+}): Promise<AuthSessionResult> {
+	const config = getAuthRuntimeConfig();
+	const accessToken = generateAccessToken(
+		{
+			sub: params.user.id,
+			email: params.user.email,
+			name: params.user.name,
+		},
+		config.jwtSecret,
+		config.jwtAccessExpiresIn,
+	);
+
+	const refreshToken = generateRefreshToken();
+	const refreshExpiresAt = calculateRefreshExpiration(config.refreshTokenTtlDays);
+	const session = await createSession({
+		userId: params.user.id,
+		ip: params.ip,
+		refreshToken,
+		refreshExpiresAt,
+		userAgent: params.userAgent,
+	});
+
+	return {
+		user: {
+			id: params.user.id,
+			email: params.user.email,
+			name: params.user.name,
+		},
+		accessToken,
+		refreshToken: session.refresh_token,
+		refreshExpiresAt: session.refresh_expires_at,
+		sessionId: session.id,
+	};
+}
+
+export async function register(input: RegisterInput): Promise<RegisterResult> {
+	const name = input.name?.trim();
+	const email = input.email?.trim().toLowerCase();
+	const password = input.password;
+
+	if (!name || !email || !password) {
+		throw new AuthServiceError('Name, email and password are required', 400);
+	}
+
+	if (password.length < 8) {
+		throw new AuthServiceError('Password must be at least 8 characters', 400);
+	}
+
+	const existingUser = await findUserByEmail(email);
+	if (existingUser) {
+		throw new AuthServiceError('Email already registered', 409);
+	}
+
+	const passwordHash = await bcrypt.hash(password, 10);
+	const user = await createUser({
+		name,
+		email,
+		passwordHash,
+	});
+
+	const sessionResult = await createSessionWithTokens({
+		user,
+		ip: input.ip,
+		userAgent: input.userAgent,
+	});
+
+	await createAuthLog({
+		userId: user.id,
+		sessionId: sessionResult.sessionId,
+		action: 'register_success',
+		tableName: 'users',
+		recordId: user.id,
+		metadata: { email: user.email },
+		ip: input.ip,
+	});
+
+	return sessionResult;
+}
 
 export async function login(input: LoginInput): Promise<LoginResult> {
 	const email = input.email?.trim().toLowerCase();
@@ -107,50 +207,27 @@ export async function login(input: LoginInput): Promise<LoginResult> {
 		throw new AuthServiceError('Invalid credentials', 401);
 	}
 
-	const config = getAuthRuntimeConfig();
-
-	const accessToken = generateAccessToken(
-		{
-			sub: user.id,
-			email: user.email,
-			name: user.name,
-		},
-		config.jwtSecret,
-		config.jwtAccessExpiresIn,
-	);
-
-	const refreshToken = generateRefreshToken();
-	const refreshExpiresAt = calculateRefreshExpiration(config.refreshTokenTtlDays);
-
-	const session = await createSession({
-		userId: user.id,
-		ip: input.ip,
-		refreshToken,
-		refreshExpiresAt,
-		userAgent: input.userAgent,
-	});
-
-	await createAuthLog({
-		userId: user.id,
-		sessionId: session.id,
-		action: 'login_success',
-		tableName: 'sessions',
-		recordId: session.id,
-		metadata: { email: user.email },
-		ip: input.ip,
-	});
-
-	return {
+	const sessionResult = await createSessionWithTokens({
 		user: {
 			id: user.id,
 			email: user.email,
 			name: user.name,
 		},
-		accessToken,
-		refreshToken: session.refresh_token,
-		refreshExpiresAt: session.refresh_expires_at,
-		sessionId: session.id,
-	};
+		ip: input.ip,
+		userAgent: input.userAgent,
+	});
+
+	await createAuthLog({
+		userId: user.id,
+		sessionId: sessionResult.sessionId,
+		action: 'login_success',
+		tableName: 'sessions',
+		recordId: sessionResult.sessionId,
+		metadata: { email: user.email },
+		ip: input.ip,
+	});
+
+	return sessionResult;
 }
 
 export async function logout(input: LogoutInput): Promise<LogoutResult> {

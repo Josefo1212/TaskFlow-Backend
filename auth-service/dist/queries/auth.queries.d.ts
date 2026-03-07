@@ -4,6 +4,11 @@ interface UserRecord {
     password: string;
     name: string;
 }
+interface CreatedUserRecord {
+    id: string;
+    email: string;
+    name: string;
+}
 interface ActiveSessionRecord {
     id: string;
     user_id: string;
@@ -20,6 +25,11 @@ interface CreateSessionParams {
     refreshExpiresAt: Date;
     userAgent: string | null;
 }
+interface CreateUserParams {
+    name: string;
+    email: string;
+    passwordHash: string;
+}
 interface CreateAuthLogParams {
     userId: string | null;
     sessionId: string | null;
@@ -30,6 +40,7 @@ interface CreateAuthLogParams {
     ip: string | null;
 }
 export declare function findUserByEmail(email: string): Promise<UserRecord | null>;
+export declare function createUser(params: CreateUserParams): Promise<CreatedUserRecord>;
 export declare function findActiveSessionByRefreshToken(refreshToken: string): Promise<ActiveSessionRecord | null>;
 export declare function createSession(params: CreateSessionParams): Promise<SessionRecord>;
 export declare function deactivateSessionByRefreshToken(refreshToken: string): Promise<string | null>;

@@ -10,6 +10,12 @@ interface UserRecord {
 	name: string;
 }
 
+interface CreatedUserRecord {
+	id: string;
+	email: string;
+	name: string;
+}
+
 interface ActiveSessionRecord {
 	id: string;
 	user_id: string;
@@ -27,6 +33,12 @@ interface CreateSessionParams {
 	refreshToken: string;
 	refreshExpiresAt: Date;
 	userAgent: string | null;
+}
+
+interface CreateUserParams {
+	name: string;
+	email: string;
+	passwordHash: string;
 }
 
 interface CreateAuthLogParams {
@@ -52,6 +64,23 @@ function getQuery(key: string): string {
 export async function findUserByEmail(email: string): Promise<UserRecord | null> {
 	const { rows } = await pool.query<UserRecord>(getQuery('auth.getUserByEmail'), [email]);
 	return rows[0] ?? null;
+}
+
+export async function createUser(params: CreateUserParams): Promise<CreatedUserRecord> {
+	const { name, email, passwordHash } = params;
+
+	const { rows } = await pool.query<CreatedUserRecord>(getQuery('auth.createUser'), [
+		name,
+		email,
+		passwordHash,
+	]);
+
+	const user = rows[0];
+	if (!user) {
+		throw new Error('Failed to create user');
+	}
+
+	return user;
 }
 
 export async function findActiveSessionByRefreshToken(refreshToken: string): Promise<ActiveSessionRecord | null> {

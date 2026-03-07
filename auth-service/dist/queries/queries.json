@@ -1,4 +1,5 @@
 {
+    "auth.createUser": "INSERT INTO users (name, email, password, role, is_active) VALUES ($1, $2, $3, 'member', TRUE) RETURNING id, email, name;",
     "auth.getUserByEmail": "SELECT id, email, password, name FROM users WHERE email = $1 LIMIT 1;",
     "auth.getActiveSessionByRefreshToken": "SELECT id, user_id FROM sessions WHERE refresh_token = $1 AND is_active = TRUE LIMIT 1;",
     "auth.createSession": "INSERT INTO sessions (user_id, ip, refresh_token, refresh_expires_at, is_active, user_agent) VALUES ($1, $2, $3, $4, TRUE, $5) RETURNING id, refresh_token, refresh_expires_at;",

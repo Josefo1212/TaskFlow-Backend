@@ -3,8 +3,27 @@ syntax = "proto3";
 package auth;
 
 service AuthService {
+	rpc Register(RegisterRequest) returns (RegisterResponse);
 	rpc Login(LoginRequest) returns (LoginResponse);
 	rpc Logout(LogoutRequest) returns (LogoutResponse);
+}
+
+message RegisterRequest {
+	string name = 1;
+	string email = 2;
+	string password = 3;
+	string ip = 4;
+	string user_agent = 5;
+}
+
+message RegisterResponse {
+	string user_id = 1;
+	string email = 2;
+	string name = 3;
+	string access_token = 4;
+	string refresh_token = 5;
+	string refresh_expires_at = 6;
+	string session_id = 7;
 }
 
 message LoginRequest {

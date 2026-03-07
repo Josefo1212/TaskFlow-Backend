@@ -2,7 +2,7 @@ import path from 'path';
 import * as grpc from '@grpc/grpc-js';
 import * as protoLoader from '@grpc/proto-loader';
 import dotenv from 'dotenv';
-import { authController } from './controller/auth.controller';
+import { authController } from './controller/auth.controller.js';
 
 dotenv.config();
 

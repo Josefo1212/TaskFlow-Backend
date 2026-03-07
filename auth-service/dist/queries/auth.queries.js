@@ -4,6 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.findUserByEmail = findUserByEmail;
+exports.createUser = createUser;
 exports.findActiveSessionByRefreshToken = findActiveSessionByRefreshToken;
 exports.createSession = createSession;
 exports.deactivateSessionByRefreshToken = deactivateSessionByRefreshToken;
@@ -21,6 +22,19 @@ function getQuery(key) {
 async function findUserByEmail(email) {
     const { rows } = await database_1.default.query(getQuery('auth.getUserByEmail'), [email]);
     return rows[0] ?? null;
+}
+async function createUser(params) {
+    const { name, email, passwordHash } = params;
+    const { rows } = await database_1.default.query(getQuery('auth.createUser'), [
+        name,
+        email,
+        passwordHash,
+    ]);
+    const user = rows[0];
+    if (!user) {
+        throw new Error('Failed to create user');
+    }
+    return user;
 }
 async function findActiveSessionByRefreshToken(refreshToken) {
     const { rows } = await database_1.default.query(getQuery('auth.getActiveSessionByRefreshToken'), [refreshToken]);
