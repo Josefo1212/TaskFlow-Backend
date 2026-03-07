@@ -10,9 +10,11 @@ exports.generateRefreshToken = generateRefreshToken;
 exports.calculateRefreshExpiration = calculateRefreshExpiration;
 exports.register = register;
 exports.login = login;
+exports.refresh = refresh;
 exports.logout = logout;
 const crypto_1 = require("crypto");
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
+const redis_1 = require("../config/redis");
 const auth_queries_1 = require("../queries/auth.queries");
 const jwt = require('jsonwebtoken');
 // --- Errores ---
@@ -24,6 +26,7 @@ class AuthServiceError extends Error {
     }
 }
 exports.AuthServiceError = AuthServiceError;
+const REFRESH_TOKEN_PREFIX = 'auth:refresh:';
 function getAuthRuntimeConfig() {
     const jwtSecret = process.env.JWT_SECRET;
     if (!jwtSecret) {
@@ -45,32 +48,48 @@ function generateRefreshToken() {
 function calculateRefreshExpiration(ttlDays) {
     return new Date(Date.now() + ttlDays * 24 * 60 * 60 * 1000);
 }
-async function createSessionWithTokens(params) {
+function getRefreshTokenKey(refreshToken) {
+    return `${REFRESH_TOKEN_PREFIX}${refreshToken}`;
+}
+function getRefreshTokenTtlSeconds(ttlDays) {
+    return Math.max(1, Math.floor(ttlDays * 24 * 60 * 60));
+}
+async function storeRefreshToken(refreshToken, user, ttlDays) {
+    await (0, redis_1.setRedisValue)(getRefreshTokenKey(refreshToken), JSON.stringify(user), getRefreshTokenTtlSeconds(ttlDays));
+}
+async function getRefreshTokenUser(refreshToken) {
+    const payload = await (0, redis_1.getRedisValue)(getRefreshTokenKey(refreshToken));
+    if (!payload) {
+        return null;
+    }
+    const parsed = JSON.parse(payload);
+    if (!parsed.id || !parsed.email || !parsed.name) {
+        return null;
+    }
+    return parsed;
+}
+async function deleteRefreshToken(refreshToken) {
+    return (0, redis_1.deleteRedisKey)(getRefreshTokenKey(refreshToken));
+}
+async function issueTokensForUser(user) {
     const config = getAuthRuntimeConfig();
     const accessToken = generateAccessToken({
-        sub: params.user.id,
-        email: params.user.email,
-        name: params.user.name,
+        sub: user.id,
+        email: user.email,
+        name: user.name,
     }, config.jwtSecret, config.jwtAccessExpiresIn);
     const refreshToken = generateRefreshToken();
     const refreshExpiresAt = calculateRefreshExpiration(config.refreshTokenTtlDays);
-    const session = await (0, auth_queries_1.createSession)({
-        userId: params.user.id,
-        ip: params.ip,
-        refreshToken,
-        refreshExpiresAt,
-        userAgent: params.userAgent,
-    });
+    await storeRefreshToken(refreshToken, user, config.refreshTokenTtlDays);
     return {
         user: {
-            id: params.user.id,
-            email: params.user.email,
-            name: params.user.name,
+            id: user.id,
+            email: user.email,
+            name: user.name,
         },
         accessToken,
-        refreshToken: session.refresh_token,
-        refreshExpiresAt: session.refresh_expires_at,
-        sessionId: session.id,
+        refreshToken,
+        refreshExpiresAt,
     };
 }
 async function register(input) {
@@ -87,35 +106,25 @@ async function register(input) {
     if (existingUser) {
         throw new AuthServiceError('Email already registered', 409);
     }
+    const existingUsername = await (0, auth_queries_1.findUserByName)(name);
+    if (existingUsername) {
+        throw new AuthServiceError('Username already registered', 409);
+    }
     const passwordHash = await bcryptjs_1.default.hash(password, 10);
     const user = await (0, auth_queries_1.createUser)({
         name,
         email,
         passwordHash,
     });
-    const sessionResult = await createSessionWithTokens({
-        user,
-        ip: input.ip,
-        userAgent: input.userAgent,
-    });
-    await (0, auth_queries_1.createAuthLog)({
-        userId: user.id,
-        sessionId: sessionResult.sessionId,
-        action: 'register_success',
-        tableName: 'users',
-        recordId: user.id,
-        metadata: { email: user.email },
-        ip: input.ip,
-    });
-    return sessionResult;
+    return issueTokensForUser(user);
 }
 async function login(input) {
-    const email = input.email?.trim().toLowerCase();
+    const name = input.name?.trim();
     const password = input.password;
-    if (!email || !password) {
-        throw new AuthServiceError('Email and password are required', 400);
+    if (!name || !password) {
+        throw new AuthServiceError('Username and password are required', 400);
     }
-    const user = await (0, auth_queries_1.findUserByEmail)(email);
+    const user = await (0, auth_queries_1.findUserByName)(name);
     if (!user) {
         throw new AuthServiceError('Invalid credentials', 401);
     }
@@ -123,48 +132,38 @@ async function login(input) {
     if (!isPasswordValid) {
         throw new AuthServiceError('Invalid credentials', 401);
     }
-    const sessionResult = await createSessionWithTokens({
-        user: {
-            id: user.id,
-            email: user.email,
-            name: user.name,
-        },
-        ip: input.ip,
-        userAgent: input.userAgent,
+    return issueTokensForUser({
+        id: user.id,
+        email: user.email,
+        name: user.name,
     });
-    await (0, auth_queries_1.createAuthLog)({
-        userId: user.id,
-        sessionId: sessionResult.sessionId,
-        action: 'login_success',
-        tableName: 'sessions',
-        recordId: sessionResult.sessionId,
-        metadata: { email: user.email },
-        ip: input.ip,
-    });
-    return sessionResult;
+}
+async function refresh(input) {
+    const refreshToken = input.refreshToken?.trim();
+    if (!refreshToken) {
+        throw new AuthServiceError('refreshToken is required', 400);
+    }
+    const user = await getRefreshTokenUser(refreshToken);
+    if (!user) {
+        throw new AuthServiceError('Refresh token is invalid or expired', 401);
+    }
+    const config = getAuthRuntimeConfig();
+    const accessToken = generateAccessToken({
+        sub: user.id,
+        email: user.email,
+        name: user.name,
+    }, config.jwtSecret, config.jwtAccessExpiresIn);
+    return { accessToken };
 }
 async function logout(input) {
     const refreshToken = input.refreshToken?.trim();
     if (!refreshToken) {
         throw new AuthServiceError('refreshToken is required', 400);
     }
-    const activeSession = await (0, auth_queries_1.findActiveSessionByRefreshToken)(refreshToken);
-    if (!activeSession) {
-        return { message: 'Session already closed or token invalid' };
+    const deleted = await deleteRefreshToken(refreshToken);
+    if (!deleted) {
+        return { message: 'Refresh token already removed or invalid' };
     }
-    const deactivatedSessionId = await (0, auth_queries_1.deactivateSessionByRefreshToken)(refreshToken);
-    if (!deactivatedSessionId) {
-        return { message: 'Session already closed or token invalid' };
-    }
-    await (0, auth_queries_1.createAuthLog)({
-        userId: activeSession.user_id,
-        sessionId: activeSession.id,
-        action: 'logout_success',
-        tableName: 'sessions',
-        recordId: activeSession.id,
-        metadata: {},
-        ip: input.ip,
-    });
     return { message: 'Logout successful' };
 }
 //# sourceMappingURL=auth.services.js.map

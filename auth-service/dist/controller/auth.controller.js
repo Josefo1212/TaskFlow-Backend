@@ -74,6 +74,38 @@ function extractMetadataValue(metadata, key) {
     }
     return null;
 }
+function extractClientIpFromMetadata(metadata) {
+    const forwardedFor = extractMetadataValue(metadata, 'x-forwarded-for');
+    if (!forwardedFor) {
+        return null;
+    }
+    const firstIp = forwardedFor
+        .split(',')
+        .map((value) => value.trim())
+        .find((value) => value.length > 0);
+    return firstIp ?? null;
+}
+function extractClientIpFromPeer(peer) {
+    const normalizedPeer = peer.trim();
+    if (!normalizedPeer) {
+        return null;
+    }
+    const ipv4Match = normalizedPeer.match(/^ipv4:([0-9.]+):\d+$/i);
+    if (ipv4Match?.[1]) {
+        return ipv4Match[1];
+    }
+    const ipv6Match = normalizedPeer.match(/^ipv6:\[([a-fA-F0-9:]+)\]:\d+$/i);
+    if (ipv6Match?.[1]) {
+        return ipv6Match[1];
+    }
+    return null;
+}
+function extractRequestContext(metadata, peer) {
+    return {
+        ip: extractClientIpFromMetadata(metadata) ?? extractClientIpFromPeer(peer),
+        userAgent: extractMetadataValue(metadata, 'user-agent'),
+    };
+}
 function mapAuthResultToGrpcResponse(data) {
     return {
         user_id: data.user.id,
@@ -82,53 +114,63 @@ function mapAuthResultToGrpcResponse(data) {
         access_token: data.accessToken,
         refresh_token: data.refreshToken,
         refresh_expires_at: data.refreshExpiresAt.toISOString(),
-        session_id: data.sessionId,
     };
 }
 exports.authController = {
     Register: async (call, callback) => {
         try {
-            const reqIp = call.request.ip || extractMetadataValue(call.metadata, 'x-forwarded-for');
-            const reqUserAgent = call.request.user_agent || extractMetadataValue(call.metadata, 'user-agent');
+            const context = extractRequestContext(call.metadata, call.getPeer());
             const data = await (0, auth_services_1.register)({
                 name: call.request.name ?? '',
                 email: call.request.email ?? '',
                 password: call.request.password ?? '',
-                ip: reqIp,
-                userAgent: reqUserAgent,
             });
+            console.log(`[Register] Usuario registrado: ${data.user.name} (${context.ip ?? 'ip-desconocida'})`);
             callback(null, mapAuthResultToGrpcResponse(data));
         }
         catch (error) {
+            console.error('[Register] Internal error:', error);
             callback(toGrpcServiceError(error));
         }
     },
     Login: async (call, callback) => {
         try {
-            const reqIp = call.request.ip || extractMetadataValue(call.metadata, 'x-forwarded-for');
-            const reqUserAgent = call.request.user_agent || extractMetadataValue(call.metadata, 'user-agent');
+            const context = extractRequestContext(call.metadata, call.getPeer());
             const data = await (0, auth_services_1.login)({
-                email: call.request.email ?? '',
+                name: call.request.name ?? '',
                 password: call.request.password ?? '',
-                ip: reqIp,
-                userAgent: reqUserAgent,
             });
+            console.log(`[Login] Usuario autenticado: ${data.user.name} (${context.ip ?? 'ip-desconocida'})`);
             callback(null, mapAuthResultToGrpcResponse(data));
         }
         catch (error) {
+            console.error('[Login] Internal error:', error);
+            callback(toGrpcServiceError(error));
+        }
+    },
+    Refresh: async (call, callback) => {
+        try {
+            const data = await (0, auth_services_1.refresh)({
+                refreshToken: call.request.refresh_token ?? '',
+            });
+            console.log('[Refresh] Access token renovado');
+            callback(null, { access_token: data.accessToken });
+        }
+        catch (error) {
+            console.error('[Refresh] Internal error:', error);
             callback(toGrpcServiceError(error));
         }
     },
     Logout: async (call, callback) => {
         try {
-            const reqIp = call.request.ip || extractMetadataValue(call.metadata, 'x-forwarded-for');
             const result = await (0, auth_services_1.logout)({
                 refreshToken: call.request.refresh_token ?? '',
-                ip: reqIp,
             });
+            console.log('[Logout] Refresh token invalidado');
             callback(null, result);
         }
         catch (error) {
+            console.error('[Logout] Internal error:', error);
             callback(toGrpcServiceError(error));
         }
     },

@@ -2,20 +2,18 @@ export interface RegisterInput {
     name: string;
     email: string;
     password: string;
-    ip: string | null;
-    userAgent: string | null;
 }
 export interface LoginInput {
-    email: string;
+    name: string;
     password: string;
-    ip: string | null;
-    userAgent: string | null;
 }
 export interface LogoutInput {
     refreshToken: string;
-    ip: string | null;
 }
-export interface AuthSessionResult {
+export interface RefreshInput {
+    refreshToken: string;
+}
+export interface AuthResult {
     user: {
         id: string;
         email: string;
@@ -24,10 +22,12 @@ export interface AuthSessionResult {
     accessToken: string;
     refreshToken: string;
     refreshExpiresAt: Date;
-    sessionId: string;
 }
-export type RegisterResult = AuthSessionResult;
-export type LoginResult = AuthSessionResult;
+export type RegisterResult = AuthResult;
+export type LoginResult = AuthResult;
+export interface RefreshResult {
+    accessToken: string;
+}
 export interface LogoutResult {
     message: string;
 }
@@ -51,6 +51,7 @@ export declare function generateRefreshToken(): string;
 export declare function calculateRefreshExpiration(ttlDays: number): Date;
 export declare function register(input: RegisterInput): Promise<RegisterResult>;
 export declare function login(input: LoginInput): Promise<LoginResult>;
+export declare function refresh(input: RefreshInput): Promise<RefreshResult>;
 export declare function logout(input: LogoutInput): Promise<LogoutResult>;
 export {};
 //# sourceMappingURL=auth.services.d.ts.map

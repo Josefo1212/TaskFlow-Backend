@@ -1,12 +1,10 @@
 import { randomBytes } from 'crypto';
 import bcrypt from 'bcryptjs';
+import { deleteRedisKey, getRedisValue, setRedisValue } from '../config/redis';
 import {
-	createAuthLog,
-	createSession,
 	createUser,
-	deactivateSessionByRefreshToken,
-	findActiveSessionByRefreshToken,
 	findUserByEmail,
+	findUserByName,
 } from '../queries/auth.queries';
 
 const jwt: any = require('jsonwebtoken');
@@ -16,23 +14,22 @@ export interface RegisterInput {
 	name: string;
 	email: string;
 	password: string;
-	ip: string | null;
-	userAgent: string | null;
 }
 
 export interface LoginInput {
-	email: string;
+	name: string;
 	password: string;
-	ip: string | null;
-	userAgent: string | null;
 }
 
 export interface LogoutInput {
 	refreshToken: string;
-	ip: string | null;
 }
 
-export interface AuthSessionResult {
+export interface RefreshInput {
+	refreshToken: string;
+}
+
+export interface AuthResult {
 	user: {
 		id: string;
 		email: string;
@@ -41,11 +38,14 @@ export interface AuthSessionResult {
 	accessToken: string;
 	refreshToken: string;
 	refreshExpiresAt: Date;
-	sessionId: string;
 }
 
-export type RegisterResult = AuthSessionResult;
-export type LoginResult = AuthSessionResult;
+export type RegisterResult = AuthResult;
+export type LoginResult = AuthResult;
+
+export interface RefreshResult {
+	accessToken: string;
+}
 
 export interface LogoutResult {
 	message: string;
@@ -67,6 +67,14 @@ export interface AuthRuntimeConfig {
 	jwtAccessExpiresIn: string;
 	refreshTokenTtlDays: number;
 }
+
+interface UserIdentity {
+	id: string;
+	email: string;
+	name: string;
+}
+
+const REFRESH_TOKEN_PREFIX = 'auth:refresh:';
 
 export function getAuthRuntimeConfig(): AuthRuntimeConfig {
 	const jwtSecret = process.env.JWT_SECRET;
@@ -106,17 +114,47 @@ export function calculateRefreshExpiration(ttlDays: number): Date {
 	return new Date(Date.now() + ttlDays * 24 * 60 * 60 * 1000);
 }
 
-async function createSessionWithTokens(params: {
-	user: { id: string; email: string; name: string };
-	ip: string | null;
-	userAgent: string | null;
-}): Promise<AuthSessionResult> {
+function getRefreshTokenKey(refreshToken: string): string {
+	return `${REFRESH_TOKEN_PREFIX}${refreshToken}`;
+}
+
+function getRefreshTokenTtlSeconds(ttlDays: number): number {
+	return Math.max(1, Math.floor(ttlDays * 24 * 60 * 60));
+}
+
+async function storeRefreshToken(refreshToken: string, user: UserIdentity, ttlDays: number): Promise<void> {
+	await setRedisValue(
+		getRefreshTokenKey(refreshToken),
+		JSON.stringify(user),
+		getRefreshTokenTtlSeconds(ttlDays),
+	);
+}
+
+async function getRefreshTokenUser(refreshToken: string): Promise<UserIdentity | null> {
+	const payload = await getRedisValue(getRefreshTokenKey(refreshToken));
+	if (!payload) {
+		return null;
+	}
+
+	const parsed = JSON.parse(payload) as UserIdentity;
+	if (!parsed.id || !parsed.email || !parsed.name) {
+		return null;
+	}
+
+	return parsed;
+}
+
+async function deleteRefreshToken(refreshToken: string): Promise<boolean> {
+	return deleteRedisKey(getRefreshTokenKey(refreshToken));
+}
+
+async function issueTokensForUser(user: UserIdentity): Promise<AuthResult> {
 	const config = getAuthRuntimeConfig();
 	const accessToken = generateAccessToken(
 		{
-			sub: params.user.id,
-			email: params.user.email,
-			name: params.user.name,
+			sub: user.id,
+			email: user.email,
+			name: user.name,
 		},
 		config.jwtSecret,
 		config.jwtAccessExpiresIn,
@@ -124,24 +162,17 @@ async function createSessionWithTokens(params: {
 
 	const refreshToken = generateRefreshToken();
 	const refreshExpiresAt = calculateRefreshExpiration(config.refreshTokenTtlDays);
-	const session = await createSession({
-		userId: params.user.id,
-		ip: params.ip,
-		refreshToken,
-		refreshExpiresAt,
-		userAgent: params.userAgent,
-	});
+	await storeRefreshToken(refreshToken, user, config.refreshTokenTtlDays);
 
 	return {
 		user: {
-			id: params.user.id,
-			email: params.user.email,
-			name: params.user.name,
+			id: user.id,
+			email: user.email,
+			name: user.name,
 		},
 		accessToken,
-		refreshToken: session.refresh_token,
-		refreshExpiresAt: session.refresh_expires_at,
-		sessionId: session.id,
+		refreshToken,
+		refreshExpiresAt,
 	};
 }
 
@@ -163,6 +194,11 @@ export async function register(input: RegisterInput): Promise<RegisterResult> {
 		throw new AuthServiceError('Email already registered', 409);
 	}
 
+	const existingUsername = await findUserByName(name);
+	if (existingUsername) {
+		throw new AuthServiceError('Username already registered', 409);
+	}
+
 	const passwordHash = await bcrypt.hash(password, 10);
 	const user = await createUser({
 		name,
@@ -170,34 +206,18 @@ export async function register(input: RegisterInput): Promise<RegisterResult> {
 		passwordHash,
 	});
 
-	const sessionResult = await createSessionWithTokens({
-		user,
-		ip: input.ip,
-		userAgent: input.userAgent,
-	});
-
-	await createAuthLog({
-		userId: user.id,
-		sessionId: sessionResult.sessionId,
-		action: 'register_success',
-		tableName: 'users',
-		recordId: user.id,
-		metadata: { email: user.email },
-		ip: input.ip,
-	});
-
-	return sessionResult;
+	return issueTokensForUser(user);
 }
 
 export async function login(input: LoginInput): Promise<LoginResult> {
-	const email = input.email?.trim().toLowerCase();
+	const name = input.name?.trim();
 	const password = input.password;
 
-	if (!email || !password) {
-		throw new AuthServiceError('Email and password are required', 400);
+	if (!name || !password) {
+		throw new AuthServiceError('Username and password are required', 400);
 	}
 
-	const user = await findUserByEmail(email);
+	const user = await findUserByName(name);
 	if (!user) {
 		throw new AuthServiceError('Invalid credentials', 401);
 	}
@@ -207,27 +227,37 @@ export async function login(input: LoginInput): Promise<LoginResult> {
 		throw new AuthServiceError('Invalid credentials', 401);
 	}
 
-	const sessionResult = await createSessionWithTokens({
-		user: {
-			id: user.id,
+	return issueTokensForUser({
+		id: user.id,
+		email: user.email,
+		name: user.name,
+	});
+}
+
+export async function refresh(input: RefreshInput): Promise<RefreshResult> {
+	const refreshToken = input.refreshToken?.trim();
+
+	if (!refreshToken) {
+		throw new AuthServiceError('refreshToken is required', 400);
+	}
+
+	const user = await getRefreshTokenUser(refreshToken);
+	if (!user) {
+		throw new AuthServiceError('Refresh token is invalid or expired', 401);
+	}
+
+	const config = getAuthRuntimeConfig();
+	const accessToken = generateAccessToken(
+		{
+			sub: user.id,
 			email: user.email,
 			name: user.name,
 		},
-		ip: input.ip,
-		userAgent: input.userAgent,
-	});
+		config.jwtSecret,
+		config.jwtAccessExpiresIn,
+	);
 
-	await createAuthLog({
-		userId: user.id,
-		sessionId: sessionResult.sessionId,
-		action: 'login_success',
-		tableName: 'sessions',
-		recordId: sessionResult.sessionId,
-		metadata: { email: user.email },
-		ip: input.ip,
-	});
-
-	return sessionResult;
+	return { accessToken };
 }
 
 export async function logout(input: LogoutInput): Promise<LogoutResult> {
@@ -237,25 +267,10 @@ export async function logout(input: LogoutInput): Promise<LogoutResult> {
 		throw new AuthServiceError('refreshToken is required', 400);
 	}
 
-	const activeSession = await findActiveSessionByRefreshToken(refreshToken);
-	if (!activeSession) {
-		return { message: 'Session already closed or token invalid' };
+	const deleted = await deleteRefreshToken(refreshToken);
+	if (!deleted) {
+		return { message: 'Refresh token already removed or invalid' };
 	}
-
-	const deactivatedSessionId = await deactivateSessionByRefreshToken(refreshToken);
-	if (!deactivatedSessionId) {
-		return { message: 'Session already closed or token invalid' };
-	}
-
-	await createAuthLog({
-		userId: activeSession.user_id,
-		sessionId: activeSession.id,
-		action: 'logout_success',
-		tableName: 'sessions',
-		recordId: activeSession.id,
-		metadata: {},
-		ip: input.ip,
-	});
 
 	return { message: 'Logout successful' };
 }

@@ -35,14 +35,25 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 const grpc = __importStar(require("@grpc/grpc-js"));
 const app_1 = require("./app");
+const redis_1 = require("./config/redis");
 const PORT = process.env.PORT || '3001';
-const address = `0.0.0.0:${PORT}`;
-const server = (0, app_1.createGrpcServer)();
-server.bindAsync(address, grpc.ServerCredentials.createInsecure(), (error) => {
-    if (error) {
-        console.error('Failed to start gRPC auth service:', error.message);
+const address = `localhost:${PORT}`;
+async function bootstrap() {
+    try {
+        await (0, redis_1.connectRedis)();
+        const server = (0, app_1.createGrpcServer)();
+        server.bindAsync(address, grpc.ServerCredentials.createInsecure(), (error) => {
+            if (error) {
+                console.error('Failed to start gRPC auth service:', error.message);
+                process.exit(1);
+            }
+            console.log(`Auth gRPC service running on ${address}`);
+        });
+    }
+    catch (error) {
+        console.error('Failed to initialize auth service:', error);
         process.exit(1);
     }
-    console.log(`Auth gRPC service running on ${address}`);
-});
+}
+void bootstrap();
 //# sourceMappingURL=index.js.map

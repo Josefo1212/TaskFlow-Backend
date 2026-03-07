@@ -3,6 +3,7 @@ import {
 	AuthServiceError,
 	LoginResult,
 	login,
+	refresh,
 	register,
 	logout,
 } from '../services/auth.services';
@@ -12,8 +13,6 @@ export interface RegisterGrpcRequest {
 	name: string;
 	email: string;
 	password: string;
-	ip?: string;
-	user_agent?: string;
 }
 
 export interface RegisterGrpcResponse {
@@ -23,14 +22,11 @@ export interface RegisterGrpcResponse {
 	access_token: string;
 	refresh_token: string;
 	refresh_expires_at: string;
-	session_id: string;
 }
 
 export interface LoginGrpcRequest {
-	email: string;
+	name: string;
 	password: string;
-	ip?: string;
-	user_agent?: string;
 }
 
 export interface LoginGrpcResponse {
@@ -40,12 +36,18 @@ export interface LoginGrpcResponse {
 	access_token: string;
 	refresh_token: string;
 	refresh_expires_at: string;
-	session_id: string;
+}
+
+export interface RefreshGrpcRequest {
+	refresh_token: string;
+}
+
+export interface RefreshGrpcResponse {
+	access_token: string;
 }
 
 export interface LogoutGrpcRequest {
 	refresh_token: string;
-	ip?: string;
 }
 
 export interface LogoutGrpcResponse {
@@ -96,6 +98,7 @@ export function extractMetadataValue(metadata: grpc.Metadata, key: string): stri
 	return null;
 }
 
+
 export function mapAuthResultToGrpcResponse(data: LoginResult): LoginGrpcResponse {
 	return {
 		user_id: data.user.id,
@@ -104,7 +107,6 @@ export function mapAuthResultToGrpcResponse(data: LoginResult): LoginGrpcRespons
 		access_token: data.accessToken,
 		refresh_token: data.refreshToken,
 		refresh_expires_at: data.refreshExpiresAt.toISOString(),
-		session_id: data.sessionId,
 	};
 }
 
@@ -114,20 +116,15 @@ export const authController: grpc.UntypedServiceImplementation = {
 		callback: grpc.sendUnaryData<RegisterGrpcResponse>,
 	) => {
 		try {
-			const reqIp = call.request.ip || extractMetadataValue(call.metadata, 'x-forwarded-for');
-			const reqUserAgent =
-				call.request.user_agent || extractMetadataValue(call.metadata, 'user-agent');
-
 			const data = await register({
 				name: call.request.name ?? '',
 				email: call.request.email ?? '',
 				password: call.request.password ?? '',
-				ip: reqIp,
-				userAgent: reqUserAgent,
 			});
-
+			console.log(`[Register] Usuario registrado: ${data.user.name}`);
 			callback(null, mapAuthResultToGrpcResponse(data));
 		} catch (error) {
+			console.error('[Register] Internal error:', error);
 			callback(toGrpcServiceError(error));
 		}
 	},
@@ -137,19 +134,31 @@ export const authController: grpc.UntypedServiceImplementation = {
 		callback: grpc.sendUnaryData<LoginGrpcResponse>,
 	) => {
 		try {
-			const reqIp = call.request.ip || extractMetadataValue(call.metadata, 'x-forwarded-for');
-			const reqUserAgent =
-				call.request.user_agent || extractMetadataValue(call.metadata, 'user-agent');
-
 			const data = await login({
-				email: call.request.email ?? '',
+				name: call.request.name ?? '',
 				password: call.request.password ?? '',
-				ip: reqIp,
-				userAgent: reqUserAgent,
 			});
-
+			console.log(`[Login] Usuario autenticado: ${data.user.name}`);
 			callback(null, mapAuthResultToGrpcResponse(data));
 		} catch (error) {
+			console.error('[Login] Internal error:', error);
+			callback(toGrpcServiceError(error));
+		}
+	},
+
+	Refresh: async (
+		call: grpc.ServerUnaryCall<RefreshGrpcRequest, RefreshGrpcResponse>,
+		callback: grpc.sendUnaryData<RefreshGrpcResponse>,
+	) => {
+		try {
+			const data = await refresh({
+				refreshToken: call.request.refresh_token ?? '',
+			});
+
+			console.log('[Refresh] Access token renovado');
+			callback(null, { access_token: data.accessToken });
+		} catch (error) {
+			console.error('[Refresh] Internal error:', error);
 			callback(toGrpcServiceError(error));
 		}
 	},
@@ -159,15 +168,14 @@ export const authController: grpc.UntypedServiceImplementation = {
 		callback: grpc.sendUnaryData<LogoutGrpcResponse>,
 	) => {
 		try {
-			const reqIp = call.request.ip || extractMetadataValue(call.metadata, 'x-forwarded-for');
-
 			const result = await logout({
 				refreshToken: call.request.refresh_token ?? '',
-				ip: reqIp,
 			});
 
+			console.log('[Logout] Refresh token invalidado');
 			callback(null, result);
 		} catch (error) {
+ 			console.error('[Logout] Internal error:', error);
 			callback(toGrpcServiceError(error));
 		}
 	},

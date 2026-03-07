@@ -4,8 +4,6 @@ export interface RegisterGrpcRequest {
     name: string;
     email: string;
     password: string;
-    ip?: string;
-    user_agent?: string;
 }
 export interface RegisterGrpcResponse {
     user_id: string;
@@ -14,13 +12,10 @@ export interface RegisterGrpcResponse {
     access_token: string;
     refresh_token: string;
     refresh_expires_at: string;
-    session_id: string;
 }
 export interface LoginGrpcRequest {
-    email: string;
+    name: string;
     password: string;
-    ip?: string;
-    user_agent?: string;
 }
 export interface LoginGrpcResponse {
     user_id: string;
@@ -29,11 +24,15 @@ export interface LoginGrpcResponse {
     access_token: string;
     refresh_token: string;
     refresh_expires_at: string;
-    session_id: string;
+}
+export interface RefreshGrpcRequest {
+    refresh_token: string;
+}
+export interface RefreshGrpcResponse {
+    access_token: string;
 }
 export interface LogoutGrpcRequest {
     refresh_token: string;
-    ip?: string;
 }
 export interface LogoutGrpcResponse {
     message: string;

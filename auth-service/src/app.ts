@@ -1,8 +1,9 @@
 import path from 'path';
 import * as grpc from '@grpc/grpc-js';
 import * as protoLoader from '@grpc/proto-loader';
+import { ReflectionService } from '@grpc/reflection';
 import dotenv from 'dotenv';
-import { authController } from './controller/auth.controller.js';
+import { authController } from './controller/auth.controller';
 
 dotenv.config();
 
@@ -29,6 +30,7 @@ export function createGrpcServer(): grpc.Server {
 
 	const server = new grpc.Server();
 	server.addService(loadedProto.auth.AuthService.service, authController);
+	new ReflectionService(packageDefinition).addToServer(server);
 
 	return server;
 }

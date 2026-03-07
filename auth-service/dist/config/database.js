@@ -13,5 +13,8 @@ const pool = new pg_1.Pool({
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
 });
+pool.on('error', (error) => {
+    console.error('[Database] Unexpected pool error:', error);
+});
 exports.default = pool;
 //# sourceMappingURL=database.js.map

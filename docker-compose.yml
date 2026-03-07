@@ -13,18 +13,31 @@ services:
       - db_data:/var/lib/postgresql/data
       - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
 
+  redis:
+    container_name: taskflow_redis
+    image: redis:8-alpine
+    restart: always
+    ports:
+      - "6379:6379"
+
   auth-service:
     container_name: auth-service
-    image: josefo1212/auth-service:latest
+    image: josefo1212/auth-service:3.0.1
     depends_on:
       - db
+      - redis
     environment:
       DB_HOST: db
       DB_PORT: 5432
       DB_NAME: taskflow_db
       DB_USER: taskflow_user
       DB_PASSWORD: taskflow_pass
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
       PORT: 3001
+      JWT_SECRET: Qw8!vLr9@zT3sX2$$eP7^bN6&uJ1*oK5
+      JWT_ACCESS_EXPIRES_IN: 15m
+      REFRESH_TOKEN_TTL_DAYS: 7
     ports:
       - "3001:3001"
 
