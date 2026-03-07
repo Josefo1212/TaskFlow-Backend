@@ -33,16 +33,51 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.toGrpcServiceError = toGrpcServiceError;
+exports.extractMetadataValue = extractMetadataValue;
+exports.mapLoginResultToGrpcResponse = mapLoginResultToGrpcResponse;
 const grpc = __importStar(require("@grpc/grpc-js"));
-const app_1 = require("./app");
-const PORT = process.env.PORT || '3001';
-const address = `0.0.0.0:${PORT}`;
-const server = (0, app_1.createGrpcServer)();
-server.bindAsync(address, grpc.ServerCredentials.createInsecure(), (error) => {
-    if (error) {
-        console.error('Failed to start gRPC auth service:', error.message);
-        process.exit(1);
+const auth_errors_1 = require("../services/auth.errors");
+function mapHttpErrorToGrpcCode(statusCode) {
+    if (statusCode === 400) {
+        return grpc.status.INVALID_ARGUMENT;
     }
-    console.log(`Auth gRPC service running on ${address}`);
-});
-//# sourceMappingURL=index.js.map
+    if (statusCode === 401) {
+        return grpc.status.UNAUTHENTICATED;
+    }
+    return grpc.status.INTERNAL;
+}
+function toGrpcServiceError(error) {
+    if (error instanceof auth_errors_1.AuthServiceError) {
+        return {
+            code: mapHttpErrorToGrpcCode(error.statusCode),
+            message: error.message,
+            name: 'AuthServiceError',
+        };
+    }
+    return {
+        code: grpc.status.INTERNAL,
+        message: 'Internal server error',
+        name: 'InternalError',
+    };
+}
+function extractMetadataValue(metadata, key) {
+    const values = metadata.get(key);
+    const value = values[0];
+    if (typeof value === 'string') {
+        return value;
+    }
+    return null;
+}
+function mapLoginResultToGrpcResponse(data) {
+    return {
+        user_id: data.user.id,
+        email: data.user.email,
+        name: data.user.name,
+        access_token: data.accessToken,
+        refresh_token: data.refreshToken,
+        refresh_expires_at: data.refreshExpiresAt.toISOString(),
+        session_id: data.sessionId,
+    };
+}
+//# sourceMappingURL=auth.grpc.mapper.js.map
