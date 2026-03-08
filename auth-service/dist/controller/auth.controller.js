@@ -74,38 +74,6 @@ function extractMetadataValue(metadata, key) {
     }
     return null;
 }
-function extractClientIpFromMetadata(metadata) {
-    const forwardedFor = extractMetadataValue(metadata, 'x-forwarded-for');
-    if (!forwardedFor) {
-        return null;
-    }
-    const firstIp = forwardedFor
-        .split(',')
-        .map((value) => value.trim())
-        .find((value) => value.length > 0);
-    return firstIp ?? null;
-}
-function extractClientIpFromPeer(peer) {
-    const normalizedPeer = peer.trim();
-    if (!normalizedPeer) {
-        return null;
-    }
-    const ipv4Match = normalizedPeer.match(/^ipv4:([0-9.]+):\d+$/i);
-    if (ipv4Match?.[1]) {
-        return ipv4Match[1];
-    }
-    const ipv6Match = normalizedPeer.match(/^ipv6:\[([a-fA-F0-9:]+)\]:\d+$/i);
-    if (ipv6Match?.[1]) {
-        return ipv6Match[1];
-    }
-    return null;
-}
-function extractRequestContext(metadata, peer) {
-    return {
-        ip: extractClientIpFromMetadata(metadata) ?? extractClientIpFromPeer(peer),
-        userAgent: extractMetadataValue(metadata, 'user-agent'),
-    };
-}
 function mapAuthResultToGrpcResponse(data) {
     return {
         user_id: data.user.id,
@@ -119,13 +87,12 @@ function mapAuthResultToGrpcResponse(data) {
 exports.authController = {
     Register: async (call, callback) => {
         try {
-            const context = extractRequestContext(call.metadata, call.getPeer());
             const data = await (0, auth_services_1.register)({
                 name: call.request.name ?? '',
                 email: call.request.email ?? '',
                 password: call.request.password ?? '',
             });
-            console.log(`[Register] Usuario registrado: ${data.user.name} (${context.ip ?? 'ip-desconocida'})`);
+            console.log(`[Register] Usuario registrado: ${data.user.name}`);
             callback(null, mapAuthResultToGrpcResponse(data));
         }
         catch (error) {
@@ -135,12 +102,11 @@ exports.authController = {
     },
     Login: async (call, callback) => {
         try {
-            const context = extractRequestContext(call.metadata, call.getPeer());
             const data = await (0, auth_services_1.login)({
                 name: call.request.name ?? '',
                 password: call.request.password ?? '',
             });
-            console.log(`[Login] Usuario autenticado: ${data.user.name} (${context.ip ?? 'ip-desconocida'})`);
+            console.log(`[Login] Usuario autenticado: ${data.user.name}`);
             callback(null, mapAuthResultToGrpcResponse(data));
         }
         catch (error) {
