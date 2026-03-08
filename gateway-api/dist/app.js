@@ -23,7 +23,7 @@ function createApp() {
             status: 'ok',
         });
     });
-    app.use('/api/auth', auth_routes_1.authRoutes);
+    app.use('/auth', auth_routes_1.authRoutes);
     app.use((req, res) => {
         res.status(404).json({
             message: `Route ${req.method} ${req.originalUrl} not found`,

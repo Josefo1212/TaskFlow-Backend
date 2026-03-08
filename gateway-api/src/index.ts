@@ -1,8 +1,8 @@
 import { createApp } from './app';
-import { env } from './config/env';
 
 const app = createApp();
+const PORT = process.env.PORT || '3003';
 
-app.listen(env.PORT, () => {
-	console.log(`Gateway API listening on http://localhost:${env.PORT}`);
+app.listen(PORT, () => {
+	console.log(`Gateway API listening on http://localhost:${PORT}`);
 });

@@ -40,7 +40,6 @@ exports.createGrpcServer = createGrpcServer;
 const path_1 = __importDefault(require("path"));
 const grpc = __importStar(require("@grpc/grpc-js"));
 const protoLoader = __importStar(require("@grpc/proto-loader"));
-const reflection_1 = require("@grpc/reflection");
 const dotenv_1 = __importDefault(require("dotenv"));
 const auth_controller_1 = require("./controller/auth.controller");
 dotenv_1.default.config();
@@ -56,7 +55,6 @@ function createGrpcServer() {
     const loadedProto = grpc.loadPackageDefinition(packageDefinition);
     const server = new grpc.Server();
     server.addService(loadedProto.auth.AuthService.service, auth_controller_1.authController);
-    new reflection_1.ReflectionService(packageDefinition).addToServer(server);
     return server;
 }
 //# sourceMappingURL=app.js.map

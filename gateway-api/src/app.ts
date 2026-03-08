@@ -22,7 +22,7 @@ export function createApp(): express.Express {
 		});
 	});
 
-	app.use('/api/auth', authRoutes);
+	app.use('/auth', authRoutes);
 
 	app.use((req, res) => {
 		res.status(404).json({
