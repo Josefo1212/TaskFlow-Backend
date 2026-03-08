@@ -4,8 +4,11 @@ exports.registerController = registerController;
 exports.loginController = loginController;
 exports.refreshController = refreshController;
 exports.logoutController = logoutController;
+exports.meController = meController;
 const zod_1 = require("zod");
 const auth_service_1 = require("../services/auth.service");
+const auth_cookie_1 = require("../utils/auth-cookie");
+const grpc_error_mapper_1 = require("../utils/grpc-error-mapper");
 const registerSchema = zod_1.z.object({
     name: zod_1.z.string().min(1, 'name is required'),
     email: zod_1.z.email('email must be valid'),
@@ -16,26 +19,60 @@ const loginSchema = zod_1.z.object({
     password: zod_1.z.string().min(1, 'password is required'),
 });
 const refreshSchema = zod_1.z.object({
-    refresh_token: zod_1.z.string().min(1, 'refresh_token is required'),
+    refresh_token: zod_1.z.string().min(1, 'refresh_token is required').optional(),
 });
+function getRefreshTokenFromRequest(req) {
+    const cookieToken = (0, auth_cookie_1.readRefreshTokenCookie)(req.cookies);
+    if (cookieToken) {
+        return cookieToken;
+    }
+    const parsedBody = refreshSchema.safeParse(req.body ?? {});
+    const bodyToken = parsedBody.success ? parsedBody.data.refresh_token?.trim() : '';
+    if (bodyToken) {
+        return bodyToken;
+    }
+    throw new grpc_error_mapper_1.GatewayError('refresh_token is required', 400);
+}
+function buildAuthResponse(response) {
+    return {
+        user_id: response.user_id,
+        email: response.email,
+        name: response.name,
+        access_token: response.access_token,
+    };
+}
 async function registerController(req, res) {
     const payload = registerSchema.parse(req.body);
     const response = await (0, auth_service_1.registerWithAuthService)(payload);
-    res.status(201).json(response);
+    (0, auth_cookie_1.setRefreshTokenCookie)(res, response.refresh_token, response.refresh_expires_at);
+    res.status(201).json(buildAuthResponse(response));
 }
 async function loginController(req, res) {
     const payload = loginSchema.parse(req.body);
     const response = await (0, auth_service_1.loginWithAuthService)(payload);
-    res.status(200).json(response);
+    (0, auth_cookie_1.setRefreshTokenCookie)(res, response.refresh_token, response.refresh_expires_at);
+    res.status(200).json(buildAuthResponse(response));
 }
 async function refreshController(req, res) {
-    const payload = refreshSchema.parse(req.body);
-    const response = await (0, auth_service_1.refreshWithAuthService)(payload);
-    res.status(200).json(response);
+    const refreshToken = getRefreshTokenFromRequest(req);
+    try {
+        const response = await (0, auth_service_1.refreshWithAuthService)({ refresh_token: refreshToken });
+        res.status(200).json(response);
+    }
+    catch (error) {
+        (0, auth_cookie_1.clearRefreshTokenCookie)(res);
+        throw error;
+    }
 }
 async function logoutController(req, res) {
-    const payload = refreshSchema.parse(req.body);
-    const response = await (0, auth_service_1.logoutWithAuthService)(payload);
+    const refreshToken = getRefreshTokenFromRequest(req);
+    const response = await (0, auth_service_1.logoutWithAuthService)({ refresh_token: refreshToken });
+    (0, auth_cookie_1.clearRefreshTokenCookie)(res);
     res.status(200).json(response);
+}
+async function meController(req, res) {
+    res.status(200).json({
+        user: req.user,
+    });
 }
 //# sourceMappingURL=auth.controller.js.map

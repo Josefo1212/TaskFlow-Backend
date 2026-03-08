@@ -21,7 +21,7 @@ services:
 
   auth-service:
     container_name: auth-service
-    image: josefo1212/auth-service:3.0.1
+    image: josefo1212/auth-service:3.1.0
     depends_on:
       - db
       - redis
@@ -39,6 +39,23 @@ services:
       REFRESH_TOKEN_TTL_DAYS: 7
     ports:
       - "3001:3001"
+
+  gateway-api:
+    container_name: gateway-api
+    image: josefo1212/gateway-api:2.1.0
+    depends_on:
+      - auth-service
+    environment:
+      PORT: 3003
+      NODE_ENV: production
+      AUTH_GRPC_URL: auth-service:3001
+      JWT_SECRET: Qw8!vLr9@zT3sX2$eP7^bN6&uJ1*oK5
+      CORS_ORIGIN: http://localhost:3000
+      REFRESH_COOKIE_NAME: refresh_token
+      REFRESH_COOKIE_SAME_SITE: lax
+      REFRESH_COOKIE_SECURE: false
+    ports:
+      - "3003:3003"
 
 volumes:
   db_data:

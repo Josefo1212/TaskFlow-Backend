@@ -17,6 +17,7 @@ FROM node:20-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
+ENV PORT=3003
 
 RUN corepack enable
 
@@ -25,9 +26,10 @@ COPY pnpm-lock.yaml ./
 RUN pnpm install --prod --frozen-lockfile
 
 COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/proto ./proto
 
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 USER appuser
 
-EXPOSE 3001
+EXPOSE 3003
 CMD ["node", "dist/index.js"]

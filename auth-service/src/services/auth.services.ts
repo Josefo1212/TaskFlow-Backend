@@ -1,13 +1,22 @@
-import { randomBytes } from 'crypto';
 import bcrypt from 'bcryptjs';
-import { deleteRedisKey, getRedisValue, setRedisValue } from '../config/redis';
 import {
 	createUser,
 	findUserByEmail,
 	findUserByName,
 } from '../queries/auth.queries';
-
-const jwt: any = require('jsonwebtoken');
+import { AuthServiceError } from '../utils/auth-errors';
+import {
+	deleteRefreshToken,
+	getRefreshTokenUser,
+	storeRefreshToken,
+	UserIdentity,
+} from '../utils/refresh-token';
+import {
+	calculateRefreshExpiration,
+	generateAccessToken,
+	generateRefreshToken,
+	getAuthRuntimeConfig,
+} from '../utils/token';
 
 // --- Tipos ---
 export interface RegisterInput {
@@ -49,103 +58,6 @@ export interface RefreshResult {
 
 export interface LogoutResult {
 	message: string;
-}
-
-// --- Errores ---
-export class AuthServiceError extends Error {
-	statusCode: number;
-
-	constructor(message: string, statusCode: number) {
-		super(message);
-		this.statusCode = statusCode;
-	}
-}
-
-// --- Config ---
-export interface AuthRuntimeConfig {
-	jwtSecret: string;
-	jwtAccessExpiresIn: string;
-	refreshTokenTtlDays: number;
-}
-
-interface UserIdentity {
-	id: string;
-	email: string;
-	name: string;
-}
-
-const REFRESH_TOKEN_PREFIX = 'auth:refresh:';
-
-export function getAuthRuntimeConfig(): AuthRuntimeConfig {
-	const jwtSecret = process.env.JWT_SECRET;
-	if (!jwtSecret) {
-		throw new AuthServiceError('JWT_SECRET is not configured', 500);
-	}
-
-	const refreshTokenTtlDays = Number(process.env.REFRESH_TOKEN_TTL_DAYS ?? 7);
-
-	return {
-		jwtSecret,
-		jwtAccessExpiresIn: process.env.JWT_ACCESS_EXPIRES_IN ?? '15m',
-		refreshTokenTtlDays,
-	};
-}
-
-// --- Token ---
-interface AccessTokenPayload {
-	sub: string;
-	email: string;
-	name: string;
-}
-
-export function generateAccessToken(
-	payload: AccessTokenPayload,
-	jwtSecret: string,
-	expiresIn: string,
-): string {
-	return jwt.sign(payload, jwtSecret, { expiresIn });
-}
-
-export function generateRefreshToken(): string {
-	return randomBytes(48).toString('hex');
-}
-
-export function calculateRefreshExpiration(ttlDays: number): Date {
-	return new Date(Date.now() + ttlDays * 24 * 60 * 60 * 1000);
-}
-
-function getRefreshTokenKey(refreshToken: string): string {
-	return `${REFRESH_TOKEN_PREFIX}${refreshToken}`;
-}
-
-function getRefreshTokenTtlSeconds(ttlDays: number): number {
-	return Math.max(1, Math.floor(ttlDays * 24 * 60 * 60));
-}
-
-async function storeRefreshToken(refreshToken: string, user: UserIdentity, ttlDays: number): Promise<void> {
-	await setRedisValue(
-		getRefreshTokenKey(refreshToken),
-		JSON.stringify(user),
-		getRefreshTokenTtlSeconds(ttlDays),
-	);
-}
-
-async function getRefreshTokenUser(refreshToken: string): Promise<UserIdentity | null> {
-	const payload = await getRedisValue(getRefreshTokenKey(refreshToken));
-	if (!payload) {
-		return null;
-	}
-
-	const parsed = JSON.parse(payload) as UserIdentity;
-	if (!parsed.id || !parsed.email || !parsed.name) {
-		return null;
-	}
-
-	return parsed;
-}
-
-async function deleteRefreshToken(refreshToken: string): Promise<boolean> {
-	return deleteRedisKey(getRefreshTokenKey(refreshToken));
 }
 
 async function issueTokensForUser(user: UserIdentity): Promise<AuthResult> {

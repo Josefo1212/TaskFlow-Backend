@@ -1,12 +1,12 @@
 import * as grpc from '@grpc/grpc-js';
 import {
-	AuthServiceError,
 	LoginResult,
 	login,
 	refresh,
 	register,
 	logout,
 } from '../services/auth.services';
+import { AuthServiceError } from '../utils/auth-errors';
 
 // --- Tipos gRPC ---
 export interface RegisterGrpcRequest {

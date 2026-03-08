@@ -39,6 +39,7 @@ exports.extractMetadataValue = extractMetadataValue;
 exports.mapAuthResultToGrpcResponse = mapAuthResultToGrpcResponse;
 const grpc = __importStar(require("@grpc/grpc-js"));
 const auth_services_1 = require("../services/auth.services");
+const auth_errors_1 = require("../utils/auth-errors");
 // --- Mapeadores gRPC ---
 function mapHttpErrorToGrpcCode(statusCode) {
     if (statusCode === 400) {
@@ -53,7 +54,7 @@ function mapHttpErrorToGrpcCode(statusCode) {
     return grpc.status.INTERNAL;
 }
 function toGrpcServiceError(error) {
-    if (error instanceof auth_services_1.AuthServiceError) {
+    if (error instanceof auth_errors_1.AuthServiceError) {
         return {
             code: mapHttpErrorToGrpcCode(error.statusCode),
             message: error.message,

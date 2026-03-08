@@ -3,6 +3,7 @@ import cors from 'cors';
 import express from 'express';
 import helmet from 'helmet';
 import morgan from 'morgan';
+import { env } from './config/env';
 import { authRoutes } from './routes/auth.routes';
 
 
@@ -10,7 +11,17 @@ export function createApp(): express.Express {
 	const app = express();
 
 	app.use(helmet());
-	app.use(cors());
+	app.use(cors({
+		credentials: true,
+		origin: (origin, callback) => {
+			if (!origin || !env.CORS_ORIGIN || origin === env.CORS_ORIGIN) {
+				callback(null, true);
+				return;
+			}
+
+			callback(new Error('Origin not allowed by CORS'));
+		},
+	}));
 	app.use(morgan('dev'));
 	app.use(express.json());
 	app.use(cookieParser());

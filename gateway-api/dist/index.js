@@ -1,9 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const app_1 = require("./app");
-const env_1 = require("./config/env");
 const app = (0, app_1.createApp)();
-app.listen(env_1.env.PORT, env_1.env.HOST, () => {
-    console.log(`Gateway API listening on http://localhost:${env_1.env.PORT}`);
+const PORT = process.env.PORT || '3003';
+app.listen(PORT, () => {
+    console.log(`Gateway API listening on http://localhost:${PORT}`);
 });
 //# sourceMappingURL=index.js.map
