@@ -1,7 +1,7 @@
 import * as grpc from '@grpc/grpc-js';
 import { createGrpcServer } from './app';
 
-const PORT = process.env.PORT || '3005';
+const PORT = process.env.PORT || '3002';
 const address = `0.0.0.0:${PORT}`;
 
 const server = createGrpcServer();

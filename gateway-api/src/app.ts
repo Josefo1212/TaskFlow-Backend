@@ -5,6 +5,7 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import { env } from './config/env';
 import { authRoutes } from './routes/auth.routes';
+import { userRoutes } from './routes/user.routes';
 
 
 export function createApp(): express.Express {
@@ -34,6 +35,7 @@ export function createApp(): express.Express {
 	});
 
 	app.use('/auth', authRoutes);
+	app.use('/users', userRoutes);
 
 	app.use((req, res) => {
 		res.status(404).json({

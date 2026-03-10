@@ -32,17 +32,23 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.userClient = void 0;
+const path_1 = __importDefault(require("path"));
 const grpc = __importStar(require("@grpc/grpc-js"));
-const app_1 = require("./app");
-const PORT = process.env.PORT || '3002';
-const address = `0.0.0.0:${PORT}`;
-const server = (0, app_1.createGrpcServer)();
-server.bindAsync(address, grpc.ServerCredentials.createInsecure(), (error) => {
-    if (error) {
-        console.error('Failed to start gRPC user service:', error.message);
-        process.exit(1);
-    }
-    console.log(`User gRPC service running on ${address}`);
+const protoLoader = __importStar(require("@grpc/proto-loader"));
+const env_1 = require("../config/env");
+const protoPath = path_1.default.resolve(__dirname, '../../proto/user.proto');
+const packageDefinition = protoLoader.loadSync(protoPath, {
+    keepCase: true,
+    longs: String,
+    enums: String,
+    defaults: true,
+    oneofs: true,
 });
-//# sourceMappingURL=index.js.map
+const loadedProto = grpc.loadPackageDefinition(packageDefinition);
+exports.userClient = new loadedProto.user.UserService(env_1.env.USER_GRPC_URL, grpc.credentials.createInsecure());
+//# sourceMappingURL=user.client.js.map
