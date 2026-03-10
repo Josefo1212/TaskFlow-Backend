@@ -11,7 +11,7 @@ const pool = new Pool({
 });
 
 pool.on('error', (error) => {
-	console.error('[Database] Unexpected pool error:', error);
+	console.error('[Databasez] Unexpected pool error:', error);
 });
 
 export default pool;
