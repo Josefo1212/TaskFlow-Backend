@@ -28,6 +28,20 @@ Cada vez que cambies el código de `gateway-api`, sigue estos pasos:
    docker push josefo1212/gateway-api:latest
    ```
 
+## Actualizar y subir imagen de user-service a Docker Hub
+
+Cada vez que cambies el código de `user-service`, sigue estos pasos:
+
+1. Construye la imagen:
+    ```
+    docker build -t josefo1212/user-service:latest -f user-service/dockerfile ./user-service
+    ```
+
+2. Sube la imagen a Docker Hub:
+    ```
+    docker push josefo1212/user-service:latest
+    ```
+
 ## Levantar los servicios con Docker Compose
 
 Para levantar todos los microservicios y la base de datos:
