@@ -1,5 +1,12 @@
 # Ignorar la carpeta node_modules
 node_modules/
 
+# Ignorar archivos de entorno de override para Docker
+*.env.docker
+*.env.*.docker
+
+# Ignorar certificados generados por Certbot
+proxy/certbot/conf/
+
 # Ignorar el archivo package.json
 package.json
