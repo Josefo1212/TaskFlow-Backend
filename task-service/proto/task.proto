@@ -1,0 +1,115 @@
+syntax = "proto3";
+
+package task;
+
+service TaskService {
+	rpc CreateTask(CreateTaskRequest) returns (CreateTaskResponse);
+	rpc GetTask(GetTaskRequest) returns (GetTaskResponse);
+	rpc UpdateTask(UpdateTaskRequest) returns (UpdateTaskResponse);
+	rpc DeleteTask(DeleteTaskRequest) returns (DeleteTaskResponse);
+	rpc ChangeTaskStatus(ChangeTaskStatusRequest) returns (ChangeTaskStatusResponse);
+	rpc ChangeTaskPriority(ChangeTaskPriorityRequest) returns (ChangeTaskPriorityResponse);
+	rpc AssignTask(AssignTaskRequest) returns (AssignTaskResponse);
+	rpc ListTasks(ListTasksRequest) returns (ListTasksResponse);
+}
+
+message Task {
+	string id = 1;
+	string project_id = 2;
+	string creator_id = 3;
+	string assignee_id = 4;
+	string title = 5;
+	string description = 6;
+	string status = 7;
+	string priority = 8;
+	string due_date = 9;
+	string created_at = 10;
+	string updated_at = 11;
+}
+
+message CreateTaskRequest {
+	string project_id = 1;
+	string creator_id = 2;
+	string assignee_id = 3;
+	string title = 4;
+	string description = 5;
+	string status = 6;
+	string priority = 7;
+	string due_date = 8;
+}
+
+message CreateTaskResponse {
+	Task task = 1;
+}
+
+message GetTaskRequest {
+	string task_id = 1;
+}
+
+message GetTaskResponse {
+	Task task = 1;
+}
+
+message UpdateTaskRequest {
+	string task_id = 1;
+	string title = 2;
+	string description = 3;
+	string due_date = 4;
+}
+
+message UpdateTaskResponse {
+	Task task = 1;
+}
+
+message DeleteTaskRequest {
+	string task_id = 1;
+}
+
+message DeleteTaskResponse {
+	bool deleted = 1;
+}
+
+message ChangeTaskStatusRequest {
+	string task_id = 1;
+	string status = 2;
+}
+
+message ChangeTaskStatusResponse {
+	Task task = 1;
+}
+
+message ChangeTaskPriorityRequest {
+	string task_id = 1;
+	string priority = 2;
+}
+
+message ChangeTaskPriorityResponse {
+	Task task = 1;
+}
+
+message AssignTaskRequest {
+	string task_id = 1;
+	string assignee_id = 2;
+}
+
+message AssignTaskResponse {
+	Task task = 1;
+}
+
+message ListTasksRequest {
+	int32 page = 1;
+	int32 limit = 2;
+	string project_id = 3;
+	string assignee_id = 4;
+	string status = 5;
+	string priority = 6;
+	string due_date_from = 7;
+	string due_date_to = 8;
+}
+
+message ListTasksResponse {
+	repeated Task tasks = 1;
+	int32 total = 2;
+	int32 page = 3;
+	int32 limit = 4;
+}
