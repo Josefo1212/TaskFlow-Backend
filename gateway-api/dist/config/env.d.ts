@@ -3,6 +3,7 @@ export declare const env: {
     NODE_ENV: "development" | "test" | "production";
     AUTH_GRPC_URL: string;
     USER_GRPC_URL: string;
+    TASK_GRPC_URL: string;
     JWT_SECRET: string;
     REFRESH_COOKIE_NAME: string;
     REFRESH_COOKIE_SAME_SITE: "lax" | "strict" | "none";

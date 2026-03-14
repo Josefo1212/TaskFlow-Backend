@@ -6,7 +6,7 @@ import morgan from 'morgan';
 import { env } from './config/env';
 import { authRoutes } from './routes/auth.routes';
 import { userRoutes } from './routes/user.routes';
-
+import { tasksRoutes } from './routes/tasks.routes';
 
 export function createApp(): express.Express {
 	const app = express();
@@ -37,6 +37,7 @@ export function createApp(): express.Express {
 
 	app.use('/auth', authRoutes);
 	app.use('/users', userRoutes);
+	app.use('/tasks', tasksRoutes);
 
 	app.use((req, res) => {
 		res.status(404).json({

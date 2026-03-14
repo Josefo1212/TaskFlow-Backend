@@ -12,8 +12,10 @@ const morgan_1 = __importDefault(require("morgan"));
 const env_1 = require("./config/env");
 const auth_routes_1 = require("./routes/auth.routes");
 const user_routes_1 = require("./routes/user.routes");
+const tasks_routes_1 = require("./routes/tasks.routes");
 function createApp() {
     const app = (0, express_1.default)();
+    app.set('trust proxy', 1);
     app.use((0, helmet_1.default)());
     app.use((0, cors_1.default)({
         credentials: true,
@@ -36,6 +38,7 @@ function createApp() {
     });
     app.use('/auth', auth_routes_1.authRoutes);
     app.use('/users', user_routes_1.userRoutes);
+    app.use('/tasks', tasks_routes_1.tasksRoutes);
     app.use((req, res) => {
         res.status(404).json({
             message: `Route ${req.method} ${req.originalUrl} not found`,

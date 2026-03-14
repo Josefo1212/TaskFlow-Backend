@@ -42,6 +42,22 @@ Cada vez que cambies el código de `user-service`, sigue estos pasos:
     docker push josefo1212/user-service:latest
     ```
 
+## TaskService: Build & Push Docker Image
+
+1. Construir la imagen:
+
+```
+docker build -t josefo1212/task-service:latest -f task-service/dockerfile ./task-service
+```
+
+2. Subir la imagen a Docker Hub:
+
+```
+docker push josefo1212/task-service:latest
+```
+
+Reemplaza `<usuario_dockerhub>` por tu usuario real de Docker Hub.
+
 ## Levantar los servicios con Docker Compose
 
 Docker Compose ahora reutiliza los `.env` existentes de cada microservicio y aplica overrides Docker desde archivos `*.env.docker`, evitando dejar variables sensibles inline en `docker-compose.yml`.

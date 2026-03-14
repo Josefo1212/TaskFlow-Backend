@@ -1,0 +1,19 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.tasksRoutes = void 0;
+const express_1 = require("express");
+const task_controller_1 = require("../controller/task.controller");
+const auth_middleware_1 = require("../middleware/auth.middleware");
+const async_handler_1 = require("../utils/async-handler");
+const router = (0, express_1.Router)();
+router.use(auth_middleware_1.authenticateRequest);
+router.post('/', (0, async_handler_1.asyncHandler)(task_controller_1.createTaskController));
+router.get('/', (0, async_handler_1.asyncHandler)(task_controller_1.listTasksController));
+router.get('/:taskId', (0, async_handler_1.asyncHandler)(task_controller_1.getTaskController));
+router.put('/:taskId', (0, async_handler_1.asyncHandler)(task_controller_1.updateTaskController));
+router.delete('/:taskId', (0, async_handler_1.asyncHandler)(task_controller_1.deleteTaskController));
+router.patch('/:taskId/status', (0, async_handler_1.asyncHandler)(task_controller_1.changeTaskStatusController));
+router.patch('/:taskId/priority', (0, async_handler_1.asyncHandler)(task_controller_1.changeTaskPriorityController));
+router.patch('/:taskId/assign', (0, async_handler_1.asyncHandler)(task_controller_1.assignTaskController));
+exports.tasksRoutes = router;
+//# sourceMappingURL=tasks.routes.js.map
