@@ -36,7 +36,7 @@ services:
 
   auth-service:
     container_name: auth-service
-    image: josefo1212/auth-service:3.1.0
+    image: josefo1212/auth-service:3.2.0
     restart: unless-stopped
     depends_on:
       - db
@@ -51,10 +51,11 @@ services:
 
   gateway-api:
     container_name: gateway-api
-    image: josefo1212/gateway-api:2.2.0
+    image: josefo1212/gateway-api:2.3.0
     restart: unless-stopped
     depends_on:
       - auth-service
+      - project-service
       - task-service
       - user-service
     env_file:
@@ -78,6 +79,20 @@ services:
       - ./task-service/.env.docker
     expose:
       - "3004"
+    networks:
+      - backend
+
+  project-service:
+    container_name: project-service
+    image: josefo1212/project-service:1.0.0
+    restart: unless-stopped
+    depends_on:
+      - db
+    env_file:
+      - ./project-service/.env
+      - ./project-service/.env.docker
+    expose:
+      - "3006"
     networks:
       - backend
 

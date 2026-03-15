@@ -4,5 +4,10 @@ dist
 .git
 .gitignore
 Dockerfile
+dockerfile
 .dockerignore
 .env
+.env.*
+*.log
+coverage
+.DS_Store

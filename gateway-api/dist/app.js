@@ -11,6 +11,7 @@ const helmet_1 = __importDefault(require("helmet"));
 const morgan_1 = __importDefault(require("morgan"));
 const env_1 = require("./config/env");
 const auth_routes_1 = require("./routes/auth.routes");
+const projects_routes_1 = require("./routes/projects.routes");
 const user_routes_1 = require("./routes/user.routes");
 const tasks_routes_1 = require("./routes/tasks.routes");
 function createApp() {
@@ -37,6 +38,7 @@ function createApp() {
         });
     });
     app.use('/auth', auth_routes_1.authRoutes);
+    app.use('/projects', projects_routes_1.projectsRoutes);
     app.use('/users', user_routes_1.userRoutes);
     app.use('/tasks', tasks_routes_1.tasksRoutes);
     app.use((req, res) => {

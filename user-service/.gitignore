@@ -1,5 +1,10 @@
-# Ignorar la carpeta node_modules
 node_modules/
+dist/
+.pnpm-store/
 
-# Ignorar el archivo package.json
-package.json
+.env
+.env.*
+
+.DS_Store
+*.log
+coverage/

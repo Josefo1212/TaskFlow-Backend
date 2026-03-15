@@ -1,7 +1,10 @@
-pa# Ignorar la carpeta node_modules
 node_modules/
+dist/
+.pnpm-store/
 
-# Ignorar el archivo package-lock.json
-package-lock.json
+.env
+.env.*
 
-package.json
+.DS_Store
+*.log
+coverage/

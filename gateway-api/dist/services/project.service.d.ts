@@ -1,0 +1,11 @@
+import { AddProjectMemberGrpcRequest, AddProjectMemberGrpcResponse, CreateProjectGrpcRequest, CreateProjectGrpcResponse, DeleteProjectGrpcRequest, DeleteProjectGrpcResponse, GetProjectGrpcRequest, GetProjectGrpcResponse, ListProjectMembersGrpcRequest, ListProjectMembersGrpcResponse, ListProjectsGrpcRequest, ListProjectsGrpcResponse, RemoveProjectMemberGrpcRequest, RemoveProjectMemberGrpcResponse, UpdateProjectGrpcRequest, UpdateProjectGrpcResponse, UpdateProjectMemberRoleGrpcRequest, UpdateProjectMemberRoleGrpcResponse } from '../grpc/project.client';
+export declare function createProjectWithProjectService(payload: CreateProjectGrpcRequest): Promise<CreateProjectGrpcResponse>;
+export declare function listProjectsWithProjectService(payload: ListProjectsGrpcRequest): Promise<ListProjectsGrpcResponse>;
+export declare function getProjectWithProjectService(payload: GetProjectGrpcRequest): Promise<GetProjectGrpcResponse>;
+export declare function updateProjectWithProjectService(payload: UpdateProjectGrpcRequest): Promise<UpdateProjectGrpcResponse>;
+export declare function deleteProjectWithProjectService(payload: DeleteProjectGrpcRequest): Promise<DeleteProjectGrpcResponse>;
+export declare function addProjectMemberWithProjectService(payload: AddProjectMemberGrpcRequest): Promise<AddProjectMemberGrpcResponse>;
+export declare function listProjectMembersWithProjectService(payload: ListProjectMembersGrpcRequest): Promise<ListProjectMembersGrpcResponse>;
+export declare function updateProjectMemberRoleWithProjectService(payload: UpdateProjectMemberRoleGrpcRequest): Promise<UpdateProjectMemberRoleGrpcResponse>;
+export declare function removeProjectMemberWithProjectService(payload: RemoveProjectMemberGrpcRequest): Promise<RemoveProjectMemberGrpcResponse>;
+//# sourceMappingURL=project.service.d.ts.map

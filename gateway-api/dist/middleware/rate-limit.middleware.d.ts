@@ -1,2 +1,2 @@
-export declare const authRateLimiter: any;
+export declare const authRateLimiter: import("express-rate-limit").RateLimitRequestHandler;
 //# sourceMappingURL=rate-limit.middleware.d.ts.map

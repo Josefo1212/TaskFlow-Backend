@@ -1,0 +1,20 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.projectsRoutes = void 0;
+const express_1 = require("express");
+const project_controller_1 = require("../controller/project.controller");
+const auth_middleware_1 = require("../middleware/auth.middleware");
+const async_handler_1 = require("../utils/async-handler");
+const router = (0, express_1.Router)();
+router.use(auth_middleware_1.authenticateRequest);
+router.post('/', (0, async_handler_1.asyncHandler)(project_controller_1.createProjectController));
+router.get('/', (0, async_handler_1.asyncHandler)(project_controller_1.listProjectsController));
+router.get('/:projectId', (0, async_handler_1.asyncHandler)(project_controller_1.getProjectController));
+router.put('/:projectId', (0, async_handler_1.asyncHandler)(project_controller_1.updateProjectController));
+router.delete('/:projectId', (0, async_handler_1.asyncHandler)(project_controller_1.deleteProjectController));
+router.get('/:projectId/members', (0, async_handler_1.asyncHandler)(project_controller_1.listProjectMembersController));
+router.post('/:projectId/members', (0, async_handler_1.asyncHandler)(project_controller_1.addProjectMemberController));
+router.patch('/:projectId/members/:userId/role', (0, async_handler_1.asyncHandler)(project_controller_1.updateProjectMemberRoleController));
+router.delete('/:projectId/members/:userId', (0, async_handler_1.asyncHandler)(project_controller_1.removeProjectMemberController));
+exports.projectsRoutes = router;
+//# sourceMappingURL=projects.routes.js.map
