@@ -1,5 +1,7 @@
 {
     "auth.createUser": "INSERT INTO users (name, email, password) VALUES ($1, $2, $3) RETURNING id, email, name;",
     "auth.getUserByEmail": "SELECT id, email, password, name FROM users WHERE email = $1 LIMIT 1;",
-    "auth.getUserByName": "SELECT id, email, password, name FROM users WHERE name = $1 LIMIT 1;"
+    "auth.getUserByName": "SELECT id, email, password, name FROM users WHERE LOWER(name) = LOWER($1) LIMIT 1;",
+    "auth.updateUserPasswordByEmail": "UPDATE users SET password = $1 WHERE email = $2 RETURNING id, email, name;",
+    "auth.updateUserPasswordByName": "UPDATE users SET password = $1 WHERE LOWER(name) = LOWER($2) RETURNING id, email, name;"
 }

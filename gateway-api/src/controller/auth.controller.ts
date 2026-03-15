@@ -1,10 +1,12 @@
 import { Request, Response } from 'express';
 import { z } from 'zod';
 import {
+	forgotPasswordWithAuthService,
 	loginWithAuthService,
 	logoutWithAuthService,
 	refreshWithAuthService,
 	registerWithAuthService,
+	resetPasswordWithAuthService,
 } from '../services/auth.service';
 import { AuthenticatedRequest } from '../middleware/auth.middleware';
 import {
@@ -27,6 +29,15 @@ const loginSchema = z.object({
 
 const refreshSchema = z.object({
 	refresh_token: z.string().min(1, 'refresh_token is required').optional(),
+});
+
+const forgotPasswordSchema = z.object({
+	name: z.string().min(1, 'name is required'),
+});
+
+const resetPasswordSchema = z.object({
+	token: z.string().min(1, 'token is required'),
+	password: z.string().min(8, 'password must have at least 8 characters'),
 });
 
 function getRefreshTokenFromRequest(req: Request): string {
@@ -95,4 +106,16 @@ export async function meController(req: AuthenticatedRequest, res: Response) {
 	res.status(200).json({
 		user: req.user,
 	});
+}
+
+export async function forgotPasswordController(req: Request, res: Response) {
+	const payload = forgotPasswordSchema.parse(req.body);
+	const response = await forgotPasswordWithAuthService({ name: payload.name });
+	res.status(200).json(response);
+}
+
+export async function resetPasswordController(req: Request, res: Response) {
+	const payload = resetPasswordSchema.parse(req.body);
+	const response = await resetPasswordWithAuthService(payload);
+	res.status(200).json(response);
 }

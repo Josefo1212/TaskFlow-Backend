@@ -2,12 +2,16 @@ import * as grpc from '@grpc/grpc-js';
 import {
 	authClient,
 	AuthUserGrpcResponse,
+	ForgotPasswordGrpcRequest,
+	ForgotPasswordGrpcResponse,
 	LoginGrpcRequest,
 	LogoutGrpcRequest,
 	LogoutGrpcResponse,
 	RefreshGrpcRequest,
 	RefreshGrpcResponse,
 	RegisterGrpcRequest,
+	ResetPasswordGrpcRequest,
+	ResetPasswordGrpcResponse,
 } from '../grpc/auth.client';
 import { mapGrpcErrorToHttp } from '../utils/grpc-error-mapper';
 
@@ -46,4 +50,16 @@ export function refreshWithAuthService(payload: RefreshGrpcRequest): Promise<Ref
 
 export function logoutWithAuthService(payload: LogoutGrpcRequest): Promise<LogoutGrpcResponse> {
 	return promisifyUnaryCall(authClient.Logout, payload);
+}
+
+export function forgotPasswordWithAuthService(
+	payload: ForgotPasswordGrpcRequest,
+): Promise<ForgotPasswordGrpcResponse> {
+	return promisifyUnaryCall(authClient.ForgotPassword, payload);
+}
+
+export function resetPasswordWithAuthService(
+	payload: ResetPasswordGrpcRequest,
+): Promise<ResetPasswordGrpcResponse> {
+	return promisifyUnaryCall(authClient.ResetPassword, payload);
 }

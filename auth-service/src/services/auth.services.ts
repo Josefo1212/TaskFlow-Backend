@@ -3,6 +3,7 @@ import {
 	createUser,
 	findUserByEmail,
 	findUserByName,
+	updateUserPasswordByName,
 } from '../queries/auth.queries';
 import { AuthServiceError } from '../utils/auth-errors';
 import {
@@ -17,6 +18,13 @@ import {
 	generateRefreshToken,
 	getAuthRuntimeConfig,
 } from '../utils/token';
+
+import {
+	deletePasswordResetToken,
+	generatePasswordResetToken,
+	getPasswordResetName,
+	storePasswordResetToken,
+} from '../utils/password-reset';
 
 // --- Tipos ---
 export interface RegisterInput {
@@ -36,6 +44,23 @@ export interface LogoutInput {
 
 export interface RefreshInput {
 	refreshToken: string;
+}
+
+export interface ForgotPasswordInput {
+	name: string;
+}
+
+export interface ForgotPasswordResult {
+	token: string;
+}
+
+export interface ResetPasswordInput {
+	token: string;
+	password: string;
+}
+
+export interface ResetPasswordResult {
+	message: string;
 }
 
 export interface AuthResult {
@@ -170,6 +195,59 @@ export async function refresh(input: RefreshInput): Promise<RefreshResult> {
 	);
 
 	return { accessToken };
+}
+
+export async function forgotPassword(input: ForgotPasswordInput): Promise<ForgotPasswordResult> {
+	const name = input.name?.trim();
+	if (!name) {
+		throw new AuthServiceError('Name is required', 400);
+	}
+
+	const ttlMinutes = Number(process.env.PASSWORD_RESET_TTL_MINUTES ?? 15);
+	const token = generatePasswordResetToken();
+
+	// Guardamos el nombre; si el usuario no existe, guardamos un marcador para no filtrar info.
+	const user = await findUserByName(name);
+	await storePasswordResetToken(token, user ? user.name : '__invalid__', ttlMinutes);
+	return { token };
+}
+
+export async function resetPassword(input: ResetPasswordInput): Promise<ResetPasswordResult> {
+	const token = input.token?.trim();
+	const password = input.password;
+
+	if (!token) {
+		throw new AuthServiceError('Token is required', 400);
+	}
+
+	if (!password) {
+		throw new AuthServiceError('Password is required', 400);
+	}
+
+	if (password.length < 8) {
+		throw new AuthServiceError('Password must be at least 8 characters', 400);
+	}
+
+	const name = await getPasswordResetName(token);
+	if (!name || name === '__invalid__') {
+		throw new AuthServiceError('Token is invalid or expired', 400);
+	}
+
+	const user = await findUserByName(name);
+	if (!user) {
+		await deletePasswordResetToken(token);
+		throw new AuthServiceError('Token is invalid or expired', 400);
+	}
+
+	const passwordHash = await bcrypt.hash(password, 10);
+	const updated = await updateUserPasswordByName(name, passwordHash);
+	await deletePasswordResetToken(token);
+
+	if (!updated) {
+		throw new AuthServiceError('Failed to update password', 500);
+	}
+
+	return { message: 'Password updated' };
 }
 
 export async function logout(input: LogoutInput): Promise<LogoutResult> {

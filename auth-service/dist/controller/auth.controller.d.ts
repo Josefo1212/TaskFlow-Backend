@@ -25,6 +25,19 @@ export interface LoginGrpcResponse {
     refresh_token: string;
     refresh_expires_at: string;
 }
+export interface ForgotPasswordGrpcRequest {
+    name: string;
+}
+export interface ForgotPasswordGrpcResponse {
+    token: string;
+}
+export interface ResetPasswordGrpcRequest {
+    token: string;
+    password: string;
+}
+export interface ResetPasswordGrpcResponse {
+    message: string;
+}
 export interface RefreshGrpcRequest {
     refresh_token: string;
 }

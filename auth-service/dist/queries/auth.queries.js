@@ -6,6 +6,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.findUserByEmail = findUserByEmail;
 exports.findUserByName = findUserByName;
 exports.createUser = createUser;
+exports.updateUserPasswordByEmail = updateUserPasswordByEmail;
+exports.updateUserPasswordByName = updateUserPasswordByName;
 const database_1 = __importDefault(require("../config/database"));
 const queries_json_1 = __importDefault(require("./queries.json"));
 const queries = queries_json_1.default;
@@ -36,5 +38,19 @@ async function createUser(params) {
         throw new Error('Failed to create user');
     }
     return user;
+}
+async function updateUserPasswordByEmail(email, passwordHash) {
+    const { rows } = await database_1.default.query(getQuery('auth.updateUserPasswordByEmail'), [
+        passwordHash,
+        email,
+    ]);
+    return rows[0] ?? null;
+}
+async function updateUserPasswordByName(name, passwordHash) {
+    const { rows } = await database_1.default.query(getQuery('auth.updateUserPasswordByName'), [
+        passwordHash,
+        name,
+    ]);
+    return rows[0] ?? null;
 }
 //# sourceMappingURL=auth.queries.js.map

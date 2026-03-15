@@ -1,9 +1,11 @@
 import * as grpc from '@grpc/grpc-js';
 import {
 	LoginResult,
+	forgotPassword,
 	login,
 	refresh,
 	register,
+	resetPassword,
 	logout,
 } from '../services/auth.services';
 import { AuthServiceError } from '../utils/auth-errors';
@@ -38,6 +40,23 @@ export interface LoginGrpcResponse {
 	refresh_expires_at: string;
 }
 
+export interface ForgotPasswordGrpcRequest {
+	name: string;
+}
+
+export interface ForgotPasswordGrpcResponse {
+	token: string;
+}
+
+export interface ResetPasswordGrpcRequest {
+	token: string;
+	password: string;
+}
+
+export interface ResetPasswordGrpcResponse {
+	message: string;
+}
+
 export interface RefreshGrpcRequest {
 	refresh_token: string;
 }
@@ -66,6 +85,10 @@ function mapHttpErrorToGrpcCode(statusCode: number): grpc.status {
 
 	if (statusCode === 409) {
 		return grpc.status.ALREADY_EXISTS;
+	}
+
+	if (statusCode === 404) {
+		return grpc.status.NOT_FOUND;
 	}
 
 	return grpc.status.INTERNAL;
@@ -113,7 +136,7 @@ export function mapAuthResultToGrpcResponse(data: LoginResult): LoginGrpcRespons
 export const authController: grpc.UntypedServiceImplementation = {
 	Register: async (
 		call: grpc.ServerUnaryCall<RegisterGrpcRequest, RegisterGrpcResponse>,
-		callback: grpc.sendUnaryData<RegisterGrpcResponse>,
+		callback: grpc.sendUnaryData<RegisterGrpcResponse>
 	) => {
 		try {
 			const data = await register({
@@ -142,6 +165,39 @@ export const authController: grpc.UntypedServiceImplementation = {
 			callback(null, mapAuthResultToGrpcResponse(data));
 		} catch (error) {
 			console.error('[Login] Internal error:', error);
+			callback(toGrpcServiceError(error));
+		}
+	},
+
+	ForgotPassword: async (
+		call: grpc.ServerUnaryCall<ForgotPasswordGrpcRequest, ForgotPasswordGrpcResponse>,
+		callback: grpc.sendUnaryData<ForgotPasswordGrpcResponse>,
+	) => {
+		try {
+			const data = await forgotPassword({
+				name: call.request.name ?? '',
+			});
+			console.log('[ForgotPassword] Token generado');
+			callback(null, { token: data.token });
+		} catch (error) {
+			console.error('[ForgotPassword] Internal error:', error);
+			callback(toGrpcServiceError(error));
+		}
+	},
+
+	ResetPassword: async (
+		call: grpc.ServerUnaryCall<ResetPasswordGrpcRequest, ResetPasswordGrpcResponse>,
+		callback: grpc.sendUnaryData<ResetPasswordGrpcResponse>,
+	) => {
+		try {
+			const data = await resetPassword({
+				token: call.request.token ?? '',
+				password: call.request.password ?? '',
+			});
+			console.log('[ResetPassword] Password actualizada');
+			callback(null, { message: data.message });
+		} catch (error) {
+			console.error('[ResetPassword] Internal error:', error);
 			callback(toGrpcServiceError(error));
 		}
 	},

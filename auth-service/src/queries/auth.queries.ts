@@ -22,6 +22,12 @@ interface CreateUserParams {
 	passwordHash: string;
 }
 
+interface UpdatedUserRecord {
+	id: string;
+	email: string;
+	name: string;
+}
+
 const queries: SqlMap = rawQueries;
 
 function getQuery(key: string): string {
@@ -57,4 +63,26 @@ export async function createUser(params: CreateUserParams): Promise<CreatedUserR
 	}
 
 	return user;
+}
+
+export async function updateUserPasswordByEmail(
+	email: string,
+	passwordHash: string,
+): Promise<UpdatedUserRecord | null> {
+	const { rows } = await pool.query<UpdatedUserRecord>(getQuery('auth.updateUserPasswordByEmail'), [
+		passwordHash,
+		email,
+	]);
+	return rows[0] ?? null;
+}
+
+export async function updateUserPasswordByName(
+	name: string,
+	passwordHash: string,
+): Promise<UpdatedUserRecord | null> {
+	const { rows } = await pool.query<UpdatedUserRecord>(getQuery('auth.updateUserPasswordByName'), [
+		passwordHash,
+		name,
+	]);
+	return rows[0] ?? null;
 }

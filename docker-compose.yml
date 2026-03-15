@@ -29,6 +29,8 @@ services:
     container_name: taskflow_redis
     image: redis:8-alpine
     restart: unless-stopped
+    ports:
+      - "127.0.0.1:6379:6379"
     networks:
       - backend
 
@@ -53,6 +55,7 @@ services:
     restart: unless-stopped
     depends_on:
       - auth-service
+      - task-service
       - user-service
     env_file:
       - ./gateway-api/.env
@@ -62,6 +65,20 @@ services:
       - "3003"
     networks:
       - edge
+      - backend
+
+  task-service:
+    container_name: task-service
+    image: josefo1212/task-service:1.0.0
+    restart: unless-stopped
+    depends_on:
+      - db
+    env_file:
+      - ./task-service/.env
+      - ./task-service/.env.docker
+    expose:
+      - "3004"
+    networks:
       - backend
 
   user-service:

@@ -5,6 +5,8 @@ exports.loginController = loginController;
 exports.refreshController = refreshController;
 exports.logoutController = logoutController;
 exports.meController = meController;
+exports.forgotPasswordController = forgotPasswordController;
+exports.resetPasswordController = resetPasswordController;
 const zod_1 = require("zod");
 const auth_service_1 = require("../services/auth.service");
 const auth_cookie_1 = require("../utils/auth-cookie");
@@ -20,6 +22,13 @@ const loginSchema = zod_1.z.object({
 });
 const refreshSchema = zod_1.z.object({
     refresh_token: zod_1.z.string().min(1, 'refresh_token is required').optional(),
+});
+const forgotPasswordSchema = zod_1.z.object({
+    name: zod_1.z.string().min(1, 'name is required'),
+});
+const resetPasswordSchema = zod_1.z.object({
+    token: zod_1.z.string().min(1, 'token is required'),
+    password: zod_1.z.string().min(8, 'password must have at least 8 characters'),
 });
 function getRefreshTokenFromRequest(req) {
     const cookieToken = (0, auth_cookie_1.readRefreshTokenCookie)(req.cookies);
@@ -74,5 +83,15 @@ async function meController(req, res) {
     res.status(200).json({
         user: req.user,
     });
+}
+async function forgotPasswordController(req, res) {
+    const payload = forgotPasswordSchema.parse(req.body);
+    const response = await (0, auth_service_1.forgotPasswordWithAuthService)({ name: payload.name });
+    res.status(200).json(response);
+}
+async function resetPasswordController(req, res) {
+    const payload = resetPasswordSchema.parse(req.body);
+    const response = await (0, auth_service_1.resetPasswordWithAuthService)(payload);
+    res.status(200).json(response);
 }
 //# sourceMappingURL=auth.controller.js.map

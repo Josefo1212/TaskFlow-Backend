@@ -13,6 +13,19 @@ export interface LogoutInput {
 export interface RefreshInput {
     refreshToken: string;
 }
+export interface ForgotPasswordInput {
+    name: string;
+}
+export interface ForgotPasswordResult {
+    token: string;
+}
+export interface ResetPasswordInput {
+    token: string;
+    password: string;
+}
+export interface ResetPasswordResult {
+    message: string;
+}
 export interface AuthResult {
     user: {
         id: string;
@@ -34,5 +47,7 @@ export interface LogoutResult {
 export declare function register(input: RegisterInput): Promise<RegisterResult>;
 export declare function login(input: LoginInput): Promise<LoginResult>;
 export declare function refresh(input: RefreshInput): Promise<RefreshResult>;
+export declare function forgotPassword(input: ForgotPasswordInput): Promise<ForgotPasswordResult>;
+export declare function resetPassword(input: ResetPasswordInput): Promise<ResetPasswordResult>;
 export declare function logout(input: LogoutInput): Promise<LogoutResult>;
 //# sourceMappingURL=auth.services.d.ts.map

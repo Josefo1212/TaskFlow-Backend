@@ -5,6 +5,8 @@ package auth;
 service AuthService {
 	rpc Register(RegisterRequest) returns (RegisterResponse);
 	rpc Login(LoginRequest) returns (LoginResponse);
+	rpc ForgotPassword(ForgotPasswordRequest) returns (ForgotPasswordResponse);
+	rpc ResetPassword(ResetPasswordRequest) returns (ResetPasswordResponse);
 	rpc Refresh(RefreshRequest) returns (RefreshResponse);
 	rpc Logout(LogoutRequest) returns (LogoutResponse);
 }
@@ -36,6 +38,23 @@ message LoginResponse {
 	string access_token = 4;
 	string refresh_token = 5;
 	string refresh_expires_at = 6;
+}
+
+message ForgotPasswordRequest {
+	string name = 1;
+}
+
+message ForgotPasswordResponse {
+	string token = 1;
+}
+
+message ResetPasswordRequest {
+	string token = 1;
+	string password = 2;
+}
+
+message ResetPasswordResponse {
+	string message = 1;
 }
 
 message RefreshRequest {

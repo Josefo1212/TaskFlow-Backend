@@ -4,6 +4,8 @@ exports.registerWithAuthService = registerWithAuthService;
 exports.loginWithAuthService = loginWithAuthService;
 exports.refreshWithAuthService = refreshWithAuthService;
 exports.logoutWithAuthService = logoutWithAuthService;
+exports.forgotPasswordWithAuthService = forgotPasswordWithAuthService;
+exports.resetPasswordWithAuthService = resetPasswordWithAuthService;
 const auth_client_1 = require("../grpc/auth.client");
 const grpc_error_mapper_1 = require("../utils/grpc-error-mapper");
 function promisifyUnaryCall(method, request) {
@@ -32,5 +34,11 @@ function refreshWithAuthService(payload) {
 }
 function logoutWithAuthService(payload) {
     return promisifyUnaryCall(auth_client_1.authClient.Logout, payload);
+}
+function forgotPasswordWithAuthService(payload) {
+    return promisifyUnaryCall(auth_client_1.authClient.ForgotPassword, payload);
+}
+function resetPasswordWithAuthService(payload) {
+    return promisifyUnaryCall(auth_client_1.authClient.ResetPassword, payload);
 }
 //# sourceMappingURL=auth.service.js.map

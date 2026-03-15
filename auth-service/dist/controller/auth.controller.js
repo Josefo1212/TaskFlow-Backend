@@ -51,6 +51,9 @@ function mapHttpErrorToGrpcCode(statusCode) {
     if (statusCode === 409) {
         return grpc.status.ALREADY_EXISTS;
     }
+    if (statusCode === 404) {
+        return grpc.status.NOT_FOUND;
+    }
     return grpc.status.INTERNAL;
 }
 function toGrpcServiceError(error) {
@@ -112,6 +115,33 @@ exports.authController = {
         }
         catch (error) {
             console.error('[Login] Internal error:', error);
+            callback(toGrpcServiceError(error));
+        }
+    },
+    ForgotPassword: async (call, callback) => {
+        try {
+            const data = await (0, auth_services_1.forgotPassword)({
+                name: call.request.name ?? '',
+            });
+            console.log('[ForgotPassword] Token generado');
+            callback(null, { token: data.token });
+        }
+        catch (error) {
+            console.error('[ForgotPassword] Internal error:', error);
+            callback(toGrpcServiceError(error));
+        }
+    },
+    ResetPassword: async (call, callback) => {
+        try {
+            const data = await (0, auth_services_1.resetPassword)({
+                token: call.request.token ?? '',
+                password: call.request.password ?? '',
+            });
+            console.log('[ResetPassword] Password actualizada');
+            callback(null, { message: data.message });
+        }
+        catch (error) {
+            console.error('[ResetPassword] Internal error:', error);
             callback(toGrpcServiceError(error));
         }
     },

@@ -42,19 +42,19 @@ Cada vez que cambies el código de `user-service`, sigue estos pasos:
     docker push josefo1212/user-service:latest
     ```
 
-## TaskService: Build & Push Docker Image
+## Actualizar y subir imagen de task-service a Docker Hub
 
-1. Construir la imagen:
+1. Construye la imagen:
 
-```
-docker build -t josefo1212/task-service:latest -f task-service/dockerfile ./task-service
-```
+   ```
+   docker build -t josefo1212/task-service:latest -f task-service/dockerfile ./task-service
+   ```
 
-2. Subir la imagen a Docker Hub:
+2. Sube la imagen a Docker Hub:
 
-```
-docker push josefo1212/task-service:latest
-```
+   ```
+   docker push josefo1212/task-service:latest
+   ```
 
 Reemplaza `<usuario_dockerhub>` por tu usuario real de Docker Hub.
 

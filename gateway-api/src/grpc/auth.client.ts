@@ -39,6 +39,23 @@ export interface LogoutGrpcResponse {
 	message: string;
 }
 
+export interface ForgotPasswordGrpcRequest {
+	name: string;
+}
+
+export interface ForgotPasswordGrpcResponse {
+	token: string;
+}
+
+export interface ResetPasswordGrpcRequest {
+	token: string;
+	password: string;
+}
+
+export interface ResetPasswordGrpcResponse {
+	message: string;
+}
+
 interface AuthServiceClient extends grpc.Client {
 	Register(
 		request: RegisterGrpcRequest,
@@ -55,6 +72,14 @@ interface AuthServiceClient extends grpc.Client {
 	Logout(
 		request: LogoutGrpcRequest,
 		callback: grpc.requestCallback<LogoutGrpcResponse>,
+	): void;
+	ForgotPassword(
+		request: ForgotPasswordGrpcRequest,
+		callback: grpc.requestCallback<ForgotPasswordGrpcResponse>,
+	): void;
+	ResetPassword(
+		request: ResetPasswordGrpcRequest,
+		callback: grpc.requestCallback<ResetPasswordGrpcResponse>,
 	): void;
 }
 
