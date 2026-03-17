@@ -12,6 +12,7 @@ const morgan_1 = __importDefault(require("morgan"));
 const env_1 = require("./config/env");
 const auth_routes_1 = require("./routes/auth.routes");
 const projects_routes_1 = require("./routes/projects.routes");
+const tags_routes_1 = require("./routes/tags.routes");
 const user_routes_1 = require("./routes/user.routes");
 const tasks_routes_1 = require("./routes/tasks.routes");
 function createApp() {
@@ -41,6 +42,7 @@ function createApp() {
     app.use('/projects', projects_routes_1.projectsRoutes);
     app.use('/users', user_routes_1.userRoutes);
     app.use('/tasks', tasks_routes_1.tasksRoutes);
+    app.use('/tags', tags_routes_1.tagsRoutes);
     app.use((req, res) => {
         res.status(404).json({
             message: `Route ${req.method} ${req.originalUrl} not found`,

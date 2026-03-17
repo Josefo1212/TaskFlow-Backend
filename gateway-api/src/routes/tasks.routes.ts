@@ -9,6 +9,11 @@ import {
 	listTasksController,
 	updateTaskController,
 } from '../controller/task.controller';
+import {
+	addTagToTaskController as addTaskTagController,
+	listTagsForTaskController as listTaskTagsController,
+	removeTagFromTaskController as removeTaskTagController,
+} from '../controller/tag.controller';
 import { authenticateRequest } from '../middleware/auth.middleware';
 import { asyncHandler } from '../utils/async-handler';
 
@@ -31,5 +36,11 @@ router.patch('/:taskId/status', asyncHandler(changeTaskStatusController));
 router.patch('/:taskId/priority', asyncHandler(changeTaskPriorityController));
 
 router.patch('/:taskId/assign', asyncHandler(assignTaskController));
+
+router.get('/:taskId/tags', asyncHandler(listTaskTagsController));
+
+router.post('/:taskId/tags', asyncHandler(addTaskTagController));
+
+router.delete('/:taskId/tags/:tagId', asyncHandler(removeTaskTagController));
 
 export const tasksRoutes: Router = router;

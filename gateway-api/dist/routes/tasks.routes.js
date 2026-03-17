@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.tasksRoutes = void 0;
 const express_1 = require("express");
 const task_controller_1 = require("../controller/task.controller");
+const tag_controller_1 = require("../controller/tag.controller");
 const auth_middleware_1 = require("../middleware/auth.middleware");
 const async_handler_1 = require("../utils/async-handler");
 const router = (0, express_1.Router)();
@@ -15,5 +16,8 @@ router.delete('/:taskId', (0, async_handler_1.asyncHandler)(task_controller_1.de
 router.patch('/:taskId/status', (0, async_handler_1.asyncHandler)(task_controller_1.changeTaskStatusController));
 router.patch('/:taskId/priority', (0, async_handler_1.asyncHandler)(task_controller_1.changeTaskPriorityController));
 router.patch('/:taskId/assign', (0, async_handler_1.asyncHandler)(task_controller_1.assignTaskController));
+router.get('/:taskId/tags', (0, async_handler_1.asyncHandler)(tag_controller_1.listTagsForTaskController));
+router.post('/:taskId/tags', (0, async_handler_1.asyncHandler)(tag_controller_1.addTagToTaskController));
+router.delete('/:taskId/tags/:tagId', (0, async_handler_1.asyncHandler)(tag_controller_1.removeTagFromTaskController));
 exports.tasksRoutes = router;
 //# sourceMappingURL=tasks.routes.js.map

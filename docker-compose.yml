@@ -57,6 +57,7 @@ services:
       - auth-service
       - project-service
       - task-service
+      - tag-service
       - user-service
     env_file:
       - ./gateway-api/.env
@@ -66,6 +67,20 @@ services:
       - "3003"
     networks:
       - edge
+      - backend
+
+  tag-service:
+    container_name: tag-service
+    image: josefo1212/tag-service:1.0.0
+    restart: unless-stopped
+    depends_on:
+      - db
+    env_file:
+      - ./tag-service/.env
+      - ./tag-service/.env.docker
+    expose:
+      - "3005"
+    networks:
       - backend
 
   task-service:

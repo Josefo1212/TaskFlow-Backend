@@ -1,0 +1,104 @@
+syntax = "proto3";
+
+package tag;
+
+service TagService {
+	rpc CreateTag(CreateTagRequest) returns (CreateTagResponse);
+	rpc GetTag(GetTagRequest) returns (GetTagResponse);
+	rpc UpdateTag(UpdateTagRequest) returns (UpdateTagResponse);
+	rpc DeleteTag(DeleteTagRequest) returns (DeleteTagResponse);
+	rpc ListTags(ListTagsRequest) returns (ListTagsResponse);
+
+	rpc AddTagToTask(AddTagToTaskRequest) returns (AddTagToTaskResponse);
+	rpc RemoveTagFromTask(RemoveTagFromTaskRequest) returns (RemoveTagFromTaskResponse);
+	rpc ListTagsForTask(ListTagsForTaskRequest) returns (ListTagsForTaskResponse);
+}
+
+message Tag {
+	string id = 1;
+	string owner_id = 2;
+	string name = 3;
+	string color = 4;
+	string created_at = 5;
+}
+
+message CreateTagRequest {
+	string requester_id = 1;
+	string name = 2;
+	string color = 3;
+}
+
+message CreateTagResponse {
+	Tag tag = 1;
+}
+
+message GetTagRequest {
+	string requester_id = 1;
+	string tag_id = 2;
+}
+
+message GetTagResponse {
+	Tag tag = 1;
+}
+
+message UpdateTagRequest {
+	string requester_id = 1;
+	string tag_id = 2;
+	string name = 3;
+	string color = 4;
+}
+
+message UpdateTagResponse {
+	Tag tag = 1;
+}
+
+message DeleteTagRequest {
+	string requester_id = 1;
+	string tag_id = 2;
+}
+
+message DeleteTagResponse {
+	bool deleted = 1;
+}
+
+message ListTagsRequest {
+	string requester_id = 1;
+	int32 page = 2;
+	int32 limit = 3;
+}
+
+message ListTagsResponse {
+	repeated Tag tags = 1;
+	int32 total = 2;
+	int32 page = 3;
+	int32 limit = 4;
+}
+
+message AddTagToTaskRequest {
+	string requester_id = 1;
+	string task_id = 2;
+	string tag_id = 3;
+}
+
+message AddTagToTaskResponse {
+	bool added = 1;
+}
+
+message RemoveTagFromTaskRequest {
+	string requester_id = 1;
+	string task_id = 2;
+	string tag_id = 3;
+}
+
+message RemoveTagFromTaskResponse {
+	bool removed = 1;
+}
+
+message ListTagsForTaskRequest {
+	string requester_id = 1;
+	string task_id = 2;
+}
+
+message ListTagsForTaskResponse {
+	repeated Tag tags = 1;
+}
