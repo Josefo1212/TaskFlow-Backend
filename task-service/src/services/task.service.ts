@@ -32,6 +32,13 @@ export interface Task {
 const ALLOWED_STATUS: readonly TaskStatus[] = ['pendiente', 'en_progreso', 'completada', 'bloqueada'];
 const ALLOWED_PRIORITY: readonly TaskPriority[] = ['baja', 'media', 'alta', 'critica'];
 
+function normalizeToken(value: string): string {
+	return value
+		.trim()
+		.toLowerCase()
+		.replace(/\s+/g, '_');
+}
+
 function formatTimestamp(value: string | Date): string {
 	const date = value instanceof Date ? value : new Date(value);
 	return date.toISOString();
@@ -125,17 +132,50 @@ function normalizeOptionalDateOnly(value?: string): string | undefined {
 }
 
 function normalizeStatus(value: string): TaskStatus {
-	const normalized = value.trim() as TaskStatus;
+	const token = normalizeToken(value);
+
+	const mapped: Record<string, TaskStatus> = {
+		pendiente: 'pendiente',
+		en_progreso: 'en_progreso',
+		completada: 'completada',
+		bloqueada: 'bloqueada',
+
+		// Common English variants
+		pending: 'pendiente',
+		in_progress: 'en_progreso',
+		inprogress: 'en_progreso',
+		completed: 'completada',
+		done: 'completada',
+		blocked: 'bloqueada',
+		block: 'bloqueada',
+	};
+
+	const normalized = (mapped[token] ?? token) as TaskStatus;
 	if (!ALLOWED_STATUS.includes(normalized)) {
-		throw new TaskServiceError('Invalid status', 400);
+		throw new TaskServiceError(`Invalid status. Allowed: ${ALLOWED_STATUS.join(', ')}`, 400);
 	}
 	return normalized;
 }
 
 function normalizePriority(value: string): TaskPriority {
-	const normalized = value.trim() as TaskPriority;
+	const token = normalizeToken(value);
+
+	const mapped: Record<string, TaskPriority> = {
+		baja: 'baja',
+		media: 'media',
+		alta: 'alta',
+		critica: 'critica',
+
+		// Common English variants
+		low: 'baja',
+		medium: 'media',
+		high: 'alta',
+		critical: 'critica',
+	};
+
+	const normalized = (mapped[token] ?? token) as TaskPriority;
 	if (!ALLOWED_PRIORITY.includes(normalized)) {
-		throw new TaskServiceError('Invalid priority', 400);
+		throw new TaskServiceError(`Invalid priority. Allowed: ${ALLOWED_PRIORITY.join(', ')}`, 400);
 	}
 	return normalized;
 }

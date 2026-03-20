@@ -10,3 +10,6 @@ proxy/certbot/conf/
 
 # Ignorar el archivo package.json
 package.json
+
+test-results/
+.cache/

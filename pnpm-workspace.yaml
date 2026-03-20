@@ -1,0 +1,7 @@
+packages:
+  - "auth-service"
+  - "gateway-api"
+  - "user-service"
+  - "task-service"
+  - "project-service"
+  - "tag-service"
