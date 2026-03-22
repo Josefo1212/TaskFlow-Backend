@@ -14,18 +14,34 @@ export function createApp(): express.Express {
 	const app = express();
 	app.set('trust proxy', 1);
 
+	const allowedCorsOrigins = (env.CORS_ORIGIN ?? '')
+		.split(',')
+		.map((origin) => origin.trim())
+		.filter(Boolean);
+
 	app.use(helmet());
-	app.use(cors({
+	const corsOptions: cors.CorsOptions = {
 		credentials: true,
 		origin: (origin, callback) => {
-			if (!origin || !env.CORS_ORIGIN || origin === env.CORS_ORIGIN) {
+			if (!origin || allowedCorsOrigins.length === 0) {
 				callback(null, true);
 				return;
 			}
 
-			callback(new Error('Origin not allowed by CORS'));
+			if (allowedCorsOrigins.includes(origin)) {
+				callback(null, true);
+				return;
+			}
+
+			const error = new Error('Origin not allowed by CORS') as Error & { statusCode?: number };
+			error.statusCode = 403;
+			callback(error);
 		},
-	}));
+	};
+
+	app.use(cors(corsOptions));
+	// Express 5 + path-to-regexp v8 no acepta '*' como ruta. Regex evita ese parse.
+	app.options(/.*/, cors(corsOptions));
 	app.use(morgan('dev'));
 	app.use(express.json());
 	app.use(cookieParser());

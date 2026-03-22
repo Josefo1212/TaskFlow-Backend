@@ -18,17 +18,29 @@ const tasks_routes_1 = require("./routes/tasks.routes");
 function createApp() {
     const app = (0, express_1.default)();
     app.set('trust proxy', 1);
+    const allowedCorsOrigins = (env_1.env.CORS_ORIGIN ?? '')
+        .split(',')
+        .map((origin) => origin.trim())
+        .filter(Boolean);
     app.use((0, helmet_1.default)());
-    app.use((0, cors_1.default)({
+    const corsOptions = {
         credentials: true,
         origin: (origin, callback) => {
-            if (!origin || !env_1.env.CORS_ORIGIN || origin === env_1.env.CORS_ORIGIN) {
+            if (!origin || allowedCorsOrigins.length === 0) {
                 callback(null, true);
                 return;
             }
-            callback(new Error('Origin not allowed by CORS'));
+            if (allowedCorsOrigins.includes(origin)) {
+                callback(null, true);
+                return;
+            }
+            const error = new Error('Origin not allowed by CORS');
+            error.statusCode = 403;
+            callback(error);
         },
-    }));
+    };
+    app.use((0, cors_1.default)(corsOptions));
+    app.options('*', (0, cors_1.default)(corsOptions));
     app.use((0, morgan_1.default)('dev'));
     app.use(express_1.default.json());
     app.use((0, cookie_parser_1.default)());

@@ -52,7 +52,7 @@ services:
 
   gateway-api:
     container_name: gateway-api
-    image: josefo1212/gateway-api:2.4.0
+    image: josefo1212/gateway-api:2.6.0
     restart: unless-stopped
     depends_on:
       - auth-service
@@ -128,7 +128,7 @@ services:
 
   frontend:
     container_name: taskflow-frontend
-    image: laulaurel/taskflow-frontend:1.3.0
+    image: laulaurel/taskflow-frontend:2.0.0
     restart: unless-stopped
     depends_on:
       - gateway-api
