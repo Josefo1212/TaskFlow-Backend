@@ -12,29 +12,42 @@ const auth_service_1 = require("../services/auth.service");
 const auth_cookie_1 = require("../utils/auth-cookie");
 const grpc_error_mapper_1 = require("../utils/grpc-error-mapper");
 const registerSchema = zod_1.z.object({
-    user: zod_1.z.string().min(1, 'user is required').max(250, 'user must be at most 250 characters'),
-    email: zod_1.z.email('email must be valid').max(250, 'email must be at most 250 characters'),
+    user: zod_1.z
+        .string()
+        .min(1, 'El campo "user" es requerido.')
+        .max(250, 'El campo "user" debe tener como máximo 250 caracteres.'),
+    email: zod_1.z
+        .email('El campo "email" debe ser un correo válido.')
+        .max(250, 'El campo "email" debe tener como máximo 250 caracteres.'),
     password: zod_1.z
         .string()
-        .min(8, 'password must have at least 8 characters')
-        .max(15, 'password must be at most 15 characters'),
+        .min(8, 'El campo "password" debe tener al menos 8 caracteres.')
+        .max(15, 'El campo "password" debe tener como máximo 15 caracteres.'),
 });
 const loginSchema = zod_1.z.object({
-    user: zod_1.z.string().trim().min(1, 'user is required').max(250, 'user must be at most 250 characters'),
-    password: zod_1.z.string().min(1, 'password is required'),
+    user: zod_1.z
+        .string()
+        .trim()
+        .min(1, 'El campo "user" es requerido.')
+        .max(250, 'El campo "user" debe tener como máximo 250 caracteres.'),
+    password: zod_1.z.string().min(1, 'El campo "password" es requerido.'),
 });
 const refreshSchema = zod_1.z.object({
-    refresh_token: zod_1.z.string().min(1, 'refresh_token is required').optional(),
+    refresh_token: zod_1.z.string().min(1, 'El campo "refresh_token" es requerido.').optional(),
 });
 const forgotPasswordSchema = zod_1.z.object({
-    user: zod_1.z.string().trim().min(1, 'user is required').max(250, 'user must be at most 250 characters'),
+    user: zod_1.z
+        .string()
+        .trim()
+        .min(1, 'El campo "user" es requerido.')
+        .max(250, 'El campo "user" debe tener como máximo 250 caracteres.'),
 });
 const resetPasswordSchema = zod_1.z.object({
-    token: zod_1.z.string().min(1, 'token is required'),
+    token: zod_1.z.string().min(1, 'El campo "token" es requerido.'),
     password: zod_1.z
         .string()
-        .min(8, 'password must have at least 8 characters')
-        .max(15, 'password must be at most 15 characters'),
+        .min(8, 'El campo "password" debe tener al menos 8 caracteres.')
+        .max(15, 'El campo "password" debe tener como máximo 15 caracteres.'),
 });
 function getRefreshTokenFromRequest(req) {
     const cookieToken = (0, auth_cookie_1.readRefreshTokenCookie)(req.cookies);
@@ -46,7 +59,7 @@ function getRefreshTokenFromRequest(req) {
     if (bodyToken) {
         return bodyToken;
     }
-    throw new grpc_error_mapper_1.GatewayError('refresh_token is required', 400);
+    throw new grpc_error_mapper_1.GatewayError('Se requiere el refresh_token.', 400);
 }
 function buildAuthResponse(response) {
     return {

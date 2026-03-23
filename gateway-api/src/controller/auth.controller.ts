@@ -17,33 +17,46 @@ import {
 import { GatewayError } from '../utils/grpc-error-mapper';
 
 const registerSchema = z.object({
-	user: z.string().min(1, 'user is required').max(250, 'user must be at most 250 characters'),
-	email: z.email('email must be valid').max(250, 'email must be at most 250 characters'),
+	user: z
+		.string()
+		.min(1, 'El campo "user" es requerido.')
+		.max(250, 'El campo "user" debe tener como máximo 250 caracteres.'),
+	email: z
+		.email('El campo "email" debe ser un correo válido.')
+		.max(250, 'El campo "email" debe tener como máximo 250 caracteres.'),
 	password: z
 		.string()
-		.min(8, 'password must have at least 8 characters')
-		.max(15, 'password must be at most 15 characters'),
+		.min(8, 'El campo "password" debe tener al menos 8 caracteres.')
+		.max(15, 'El campo "password" debe tener como máximo 15 caracteres.'),
 });
 
 const loginSchema = z.object({
-	user: z.string().trim().min(1, 'user is required').max(250, 'user must be at most 250 characters'),
-	password: z.string().min(1, 'password is required'),
+	user: z
+		.string()
+		.trim()
+		.min(1, 'El campo "user" es requerido.')
+		.max(250, 'El campo "user" debe tener como máximo 250 caracteres.'),
+	password: z.string().min(1, 'El campo "password" es requerido.'),
 });
 
 const refreshSchema = z.object({
-	refresh_token: z.string().min(1, 'refresh_token is required').optional(),
+	refresh_token: z.string().min(1, 'El campo "refresh_token" es requerido.').optional(),
 });
 
 const forgotPasswordSchema = z.object({
-	user: z.string().trim().min(1, 'user is required').max(250, 'user must be at most 250 characters'),
+	user: z
+		.string()
+		.trim()
+		.min(1, 'El campo "user" es requerido.')
+		.max(250, 'El campo "user" debe tener como máximo 250 caracteres.'),
 });
 
 const resetPasswordSchema = z.object({
-	token: z.string().min(1, 'token is required'),
+	token: z.string().min(1, 'El campo "token" es requerido.'),
 	password: z
 		.string()
-		.min(8, 'password must have at least 8 characters')
-		.max(15, 'password must be at most 15 characters'),
+		.min(8, 'El campo "password" debe tener al menos 8 caracteres.')
+		.max(15, 'El campo "password" debe tener como máximo 15 caracteres.'),
 });
 
 function getRefreshTokenFromRequest(req: Request): string {
@@ -59,7 +72,7 @@ function getRefreshTokenFromRequest(req: Request): string {
 		return bodyToken;
 	}
 
-	throw new GatewayError('refresh_token is required', 400);
+	throw new GatewayError('Se requiere el refresh_token.', 400);
 }
 
 function buildAuthResponse(response: Awaited<ReturnType<typeof loginWithAuthService>>) {

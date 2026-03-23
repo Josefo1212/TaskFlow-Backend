@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { z } from 'zod';
 import { AuthenticatedRequest } from '../middleware/auth.middleware';
+import { GatewayError } from '../utils/grpc-error-mapper';
 import {
 	addTagToTaskWithTagService,
 	createTagWithTagService,
@@ -13,17 +14,22 @@ import {
 } from '../services/tag.service';
 
 const createTagSchema = z.object({
-	name: z.string().trim().min(1, 'name is required').max(200, 'name must be at most 200 characters'),
+	name: z.string().trim().min(1, 'El campo "name" es requerido.').max(200, 'El campo "name" debe tener como máximo 200 caracteres.'),
 	color: z.string().min(1).optional(),
 });
 
 const updateTagSchema = z
 	.object({
-		name: z.string().trim().min(1).max(200, 'name must be at most 200 characters').optional(),
+		name: z
+			.string()
+			.trim()
+			.min(1)
+			.max(200, 'El campo "name" debe tener como máximo 200 caracteres.')
+			.optional(),
 		color: z.string().min(1).optional(),
 	})
 	.refine((data) => data.name !== undefined || data.color !== undefined, {
-		message: 'name or color is required',
+		message: 'Debes enviar al menos "name" o "color".',
 	});
 
 const listTagsSchema = z.object({
@@ -32,21 +38,31 @@ const listTagsSchema = z.object({
 });
 
 const addTagToTaskSchema = z.object({
-	tag_id: z.string().min(1, 'tag_id is required'),
+	tag_id: z.string().min(1, 'El campo "tag_id" es requerido.'),
 });
 
 function requireAuthenticatedUserId(req: AuthenticatedRequest): string {
-	return req.user?.sub ?? '';
+	const userId = req.user?.sub;
+	if (!userId) {
+		throw new GatewayError('No autorizado.', 401);
+	}
+	return userId;
 }
 
 function requireTagId(req: Request): string {
 	const { tagId } = req.params as { tagId?: string };
-	return typeof tagId === 'string' ? tagId : '';
+	if (typeof tagId !== 'string' || !tagId.trim()) {
+		throw new GatewayError('Se requiere el parámetro "tagId".', 400);
+	}
+	return tagId;
 }
 
 function requireTaskId(req: Request): string {
 	const { taskId } = req.params as { taskId?: string };
-	return typeof taskId === 'string' ? taskId : '';
+	if (typeof taskId !== 'string' || !taskId.trim()) {
+		throw new GatewayError('Se requiere el parámetro "taskId".', 400);
+	}
+	return taskId;
 }
 
 export async function createTagController(req: AuthenticatedRequest, res: Response) {

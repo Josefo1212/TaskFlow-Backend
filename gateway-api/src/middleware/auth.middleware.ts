@@ -32,7 +32,7 @@ export function authenticateRequest(req: AuthenticatedRequest, _res: Response, n
 	const token = extractAccessToken(req);
 
 	if (!token) {
-		next(new GatewayError('Access token is required', 401));
+		next(new GatewayError('Se requiere el access token.', 401));
 		return;
 	}
 
@@ -46,7 +46,7 @@ export function authenticateRequest(req: AuthenticatedRequest, _res: Response, n
 			typeof decoded.email !== 'string' ||
 			typeof decoded.user !== 'string'
 		) {
-			throw new GatewayError('Invalid access token payload', 401);
+			throw new GatewayError('El access token tiene un contenido inválido.', 401);
 		}
 
 		req.user = decoded as AuthenticatedUserPayload;
@@ -57,6 +57,6 @@ export function authenticateRequest(req: AuthenticatedRequest, _res: Response, n
 			return;
 		}
 
-		next(new GatewayError('Invalid or expired access token', 401));
+		next(new GatewayError('Access token inválido o expirado.', 401));
 	}
 }

@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { z } from 'zod';
 import { AuthenticatedRequest } from '../middleware/auth.middleware';
+import { GatewayError } from '../utils/grpc-error-mapper';
 import {
 	checkUserExistsWithUserService,
 	getBasicInfoWithUserService,
@@ -13,11 +14,18 @@ import {
 
 const updateProfileSchema = z
 	.object({
-		user: z.string().min(1, 'user cannot be empty').max(250, 'user must be at most 250 characters').optional(),
-		email: z.email('email must be valid').max(250, 'email must be at most 250 characters').optional(),
+		user: z
+			.string()
+			.min(1, 'El campo "user" no puede estar vacío.')
+			.max(250, 'El campo "user" debe tener como máximo 250 caracteres.')
+			.optional(),
+		email: z
+			.email('El campo "email" debe ser un correo válido.')
+			.max(250, 'El campo "email" debe tener como máximo 250 caracteres.')
+			.optional(),
 	})
 	.refine((data) => data.user !== undefined || data.email !== undefined, {
-		message: 'user or email is required',
+		message: 'Debes enviar al menos "user" o "email".',
 	});
 
 const listUsersSchema = z.object({
@@ -36,13 +44,17 @@ const getUsersByIdsSchema = z.object({
 });
 
 function requireAuthenticatedUserId(req: AuthenticatedRequest): string {
-	return req.user?.sub ?? '';
+	const userId = req.user?.sub;
+	if (!userId) {
+		throw new GatewayError('No autorizado.', 401);
+	}
+	return userId;
 }
 
 function requireRouteUserId(req: Request): string {
 	const { userId } = req.params;
 	if (typeof userId !== 'string' || !userId.trim()) {
-		return '';
+		throw new GatewayError('Se requiere el parámetro "userId".', 400);
 	}
 
 	return userId;

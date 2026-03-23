@@ -21,7 +21,7 @@ function extractAccessToken(req) {
 function authenticateRequest(req, _res, next) {
     const token = extractAccessToken(req);
     if (!token) {
-        next(new grpc_error_mapper_1.GatewayError('Access token is required', 401));
+        next(new grpc_error_mapper_1.GatewayError('Se requiere el access token.', 401));
         return;
     }
     try {
@@ -31,7 +31,7 @@ function authenticateRequest(req, _res, next) {
             typeof decoded.sub !== 'string' ||
             typeof decoded.email !== 'string' ||
             typeof decoded.user !== 'string') {
-            throw new grpc_error_mapper_1.GatewayError('Invalid access token payload', 401);
+            throw new grpc_error_mapper_1.GatewayError('El access token tiene un contenido inválido.', 401);
         }
         req.user = decoded;
         next();
@@ -41,7 +41,7 @@ function authenticateRequest(req, _res, next) {
             next(error);
             return;
         }
-        next(new grpc_error_mapper_1.GatewayError('Invalid or expired access token', 401));
+        next(new grpc_error_mapper_1.GatewayError('Access token inválido o expirado.', 401));
     }
 }
 //# sourceMappingURL=auth.middleware.js.map

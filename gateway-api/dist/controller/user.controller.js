@@ -8,14 +8,22 @@ exports.getUsersByIdsController = getUsersByIdsController;
 exports.checkUserExistsController = checkUserExistsController;
 exports.getBasicInfoController = getBasicInfoController;
 const zod_1 = require("zod");
+const grpc_error_mapper_1 = require("../utils/grpc-error-mapper");
 const user_service_1 = require("../services/user.service");
 const updateProfileSchema = zod_1.z
     .object({
-    user: zod_1.z.string().min(1, 'user cannot be empty').max(250, 'user must be at most 250 characters').optional(),
-    email: zod_1.z.email('email must be valid').max(250, 'email must be at most 250 characters').optional(),
+    user: zod_1.z
+        .string()
+        .min(1, 'El campo "user" no puede estar vacío.')
+        .max(250, 'El campo "user" debe tener como máximo 250 caracteres.')
+        .optional(),
+    email: zod_1.z
+        .email('El campo "email" debe ser un correo válido.')
+        .max(250, 'El campo "email" debe tener como máximo 250 caracteres.')
+        .optional(),
 })
     .refine((data) => data.user !== undefined || data.email !== undefined, {
-    message: 'user or email is required',
+    message: 'Debes enviar al menos "user" o "email".',
 });
 const listUsersSchema = zod_1.z.object({
     page: zod_1.z.coerce.number().int().positive().optional(),
@@ -30,12 +38,16 @@ const getUsersByIdsSchema = zod_1.z.object({
     user_ids: zod_1.z.array(zod_1.z.string().min(1)).default([]),
 });
 function requireAuthenticatedUserId(req) {
-    return req.user?.sub ?? '';
+    const userId = req.user?.sub;
+    if (!userId) {
+        throw new grpc_error_mapper_1.GatewayError('No autorizado.', 401);
+    }
+    return userId;
 }
 function requireRouteUserId(req) {
     const { userId } = req.params;
     if (typeof userId !== 'string' || !userId.trim()) {
-        return '';
+        throw new grpc_error_mapper_1.GatewayError('Se requiere el parámetro "userId".', 400);
     }
     return userId;
 }

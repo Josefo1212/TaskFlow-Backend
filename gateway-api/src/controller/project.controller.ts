@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { z } from 'zod';
 import { AuthenticatedRequest } from '../middleware/auth.middleware';
+import { GatewayError } from '../utils/grpc-error-mapper';
 import {
 	addProjectMemberWithProjectService,
 	createProjectWithProjectService,
@@ -14,22 +15,36 @@ import {
 } from '../services/project.service';
 
 function requireAuthenticatedUserId(req: AuthenticatedRequest): string {
-	return req.user?.sub ?? '';
+	const userId = req.user?.sub;
+	if (!userId) {
+		throw new GatewayError('No autorizado.', 401);
+	}
+	return userId;
 }
 
 function requireProjectId(req: Request): string {
 	const { projectId } = req.params as { projectId?: string };
-	return typeof projectId === 'string' ? projectId : '';
+	if (typeof projectId !== 'string' || !projectId.trim()) {
+		throw new GatewayError('Se requiere el parámetro "projectId".', 400);
+	}
+	return projectId;
 }
 
 function requireUserIdParam(req: Request): string {
 	const { userId } = req.params as { userId?: string };
-	return typeof userId === 'string' ? userId : '';
+	if (typeof userId !== 'string' || !userId.trim()) {
+		throw new GatewayError('Se requiere el parámetro "userId".', 400);
+	}
+	return userId;
 }
 
 const createProjectSchema = z.object({
-	name: z.string().trim().min(1, 'name is required').max(200, 'name must be at most 200 characters'),
-	description: z.string().trim().max(600, 'description must be at most 600 characters').optional(),
+	name: z.string().trim().min(1, 'El campo "name" es requerido.').max(200, 'El campo "name" debe tener como máximo 200 caracteres.'),
+	description: z
+		.string()
+		.trim()
+		.max(600, 'El campo "description" debe tener como máximo 600 caracteres.')
+		.optional(),
 });
 
 const listProjectsSchema = z.object({
@@ -39,11 +54,20 @@ const listProjectsSchema = z.object({
 
 const updateProjectSchema = z
 	.object({
-		name: z.string().trim().min(1).max(200, 'name must be at most 200 characters').optional(),
-		description: z.string().trim().max(600, 'description must be at most 600 characters').optional(),
+		name: z
+			.string()
+			.trim()
+			.min(1)
+			.max(200, 'El campo "name" debe tener como máximo 200 caracteres.')
+			.optional(),
+		description: z
+			.string()
+			.trim()
+			.max(600, 'El campo "description" debe tener como máximo 600 caracteres.')
+			.optional(),
 	})
 	.refine((data) => data.name !== undefined || data.description !== undefined, {
-		message: 'name or description is required',
+		message: 'Debes enviar al menos "name" o "description".',
 	});
 
 const addMemberSchema = z.preprocess((input) => {
@@ -54,12 +78,12 @@ const addMemberSchema = z.preprocess((input) => {
 		role: body.role,
 	};
 }, z.object({
-	user_id: z.string().min(1, 'user_id is required'),
+	user_id: z.string().min(1, 'El campo "user_id" es requerido.'),
 	role: z.string().optional(),
 }));
 
 const updateMemberRoleSchema = z.object({
-	role: z.string().min(1, 'role is required'),
+	role: z.string().min(1, 'El campo "role" es requerido.'),
 });
 
 export async function createProjectController(req: AuthenticatedRequest, res: Response) {

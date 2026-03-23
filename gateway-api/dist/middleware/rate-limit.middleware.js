@@ -11,7 +11,7 @@ exports.authRateLimiter = (0, express_rate_limit_1.default)({
     standardHeaders: true,
     legacyHeaders: false,
     message: {
-        message: 'Too many authentication requests. Try again in 1 minute.',
+        message: 'Demasiadas solicitudes de autenticación. Intenta de nuevo en 1 minuto.',
     },
 });
 //# sourceMappingURL=rate-limit.middleware.js.map

@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { z } from 'zod';
 import { AuthenticatedRequest } from '../middleware/auth.middleware';
+import { GatewayError } from '../utils/grpc-error-mapper';
 import {
 	assignTaskWithTaskService,
 	changeTaskPriorityWithTaskService,
@@ -13,10 +14,14 @@ import {
 } from '../services/task.service';
 
 const createTaskSchema = z.object({
-	project_id: z.string().min(1, 'project_id is required'),
+	project_id: z.string().min(1, 'El campo "project_id" es requerido.'),
 	assignee_id: z.string().min(1).optional(),
-	title: z.string().trim().min(1, 'title is required').max(200, 'title must be at most 200 characters'),
-	description: z.string().trim().max(600, 'description must be at most 600 characters').optional(),
+	title: z.string().trim().min(1, 'El campo "title" es requerido.').max(200, 'El campo "title" debe tener como máximo 200 caracteres.'),
+	description: z
+		.string()
+		.trim()
+		.max(600, 'El campo "description" debe tener como máximo 600 caracteres.')
+		.optional(),
 	status: z.string().optional(),
 	priority: z.string().optional(),
 	due_date: z.string().optional(),
@@ -24,12 +29,21 @@ const createTaskSchema = z.object({
 
 const updateTaskSchema = z
 	.object({
-		title: z.string().trim().min(1).max(200, 'title must be at most 200 characters').optional(),
-		description: z.string().trim().max(600, 'description must be at most 600 characters').optional(),
+		title: z
+			.string()
+			.trim()
+			.min(1)
+			.max(200, 'El campo "title" debe tener como máximo 200 caracteres.')
+			.optional(),
+		description: z
+			.string()
+			.trim()
+			.max(600, 'El campo "description" debe tener como máximo 600 caracteres.')
+			.optional(),
 		due_date: z.string().optional(),
 	})
 	.refine((data) => data.title !== undefined || data.description !== undefined || data.due_date !== undefined, {
-		message: 'title, description or due_date is required',
+		message: 'Debes enviar al menos "title", "description" o "due_date".',
 	});
 
 const listTasksSchema = z.object({
@@ -44,11 +58,11 @@ const listTasksSchema = z.object({
 });
 
 const changeStatusSchema = z.object({
-	status: z.string().min(1, 'status is required'),
+	status: z.string().min(1, 'El campo "status" es requerido.'),
 });
 
 const changePrioritySchema = z.object({
-	priority: z.string().min(1, 'priority is required'),
+	priority: z.string().min(1, 'El campo "priority" es requerido.'),
 });
 
 const assignSchema = z.object({
@@ -56,12 +70,19 @@ const assignSchema = z.object({
 });
 
 function requireAuthenticatedUserId(req: AuthenticatedRequest): string {
-	return req.user?.sub ?? '';
+	const userId = req.user?.sub;
+	if (!userId) {
+		throw new GatewayError('No autorizado.', 401);
+	}
+	return userId;
 }
 
 function requireTaskId(req: Request): string {
 	const { taskId } = req.params as { taskId?: string };
-	return typeof taskId === 'string' ? taskId : '';
+	if (typeof taskId !== 'string' || !taskId.trim()) {
+		throw new GatewayError('Se requiere el parámetro "taskId".', 400);
+	}
+	return taskId;
 }
 
 export async function createTaskController(req: AuthenticatedRequest, res: Response) {

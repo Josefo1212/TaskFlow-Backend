@@ -9,8 +9,8 @@ CREATE TABLE users (
     email VARCHAR(250) UNIQUE NOT NULL
         CHECK (char_length(email) <= 250),
     password TEXT NOT NULL,
-    user VARCHAR(250) UNIQUE NOT NULL
-        CHECK (char_length(user) <= 250),
+    "user" VARCHAR(250) UNIQUE NOT NULL
+        CHECK (char_length("user") <= 250),
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );

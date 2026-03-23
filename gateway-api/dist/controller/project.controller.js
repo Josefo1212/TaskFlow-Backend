@@ -10,21 +10,36 @@ exports.listProjectMembersController = listProjectMembersController;
 exports.updateProjectMemberRoleController = updateProjectMemberRoleController;
 exports.removeProjectMemberController = removeProjectMemberController;
 const zod_1 = require("zod");
+const grpc_error_mapper_1 = require("../utils/grpc-error-mapper");
 const project_service_1 = require("../services/project.service");
 function requireAuthenticatedUserId(req) {
-    return req.user?.sub ?? '';
+    const userId = req.user?.sub;
+    if (!userId) {
+        throw new grpc_error_mapper_1.GatewayError('No autorizado.', 401);
+    }
+    return userId;
 }
 function requireProjectId(req) {
     const { projectId } = req.params;
-    return typeof projectId === 'string' ? projectId : '';
+    if (typeof projectId !== 'string' || !projectId.trim()) {
+        throw new grpc_error_mapper_1.GatewayError('Se requiere el parámetro "projectId".', 400);
+    }
+    return projectId;
 }
 function requireUserIdParam(req) {
     const { userId } = req.params;
-    return typeof userId === 'string' ? userId : '';
+    if (typeof userId !== 'string' || !userId.trim()) {
+        throw new grpc_error_mapper_1.GatewayError('Se requiere el parámetro "userId".', 400);
+    }
+    return userId;
 }
 const createProjectSchema = zod_1.z.object({
-    name: zod_1.z.string().trim().min(1, 'name is required').max(200, 'name must be at most 200 characters'),
-    description: zod_1.z.string().trim().max(600, 'description must be at most 600 characters').optional(),
+    name: zod_1.z.string().trim().min(1, 'El campo "name" es requerido.').max(200, 'El campo "name" debe tener como máximo 200 caracteres.'),
+    description: zod_1.z
+        .string()
+        .trim()
+        .max(600, 'El campo "description" debe tener como máximo 600 caracteres.')
+        .optional(),
 });
 const listProjectsSchema = zod_1.z.object({
     page: zod_1.z.coerce.number().int().positive().optional(),
@@ -32,11 +47,20 @@ const listProjectsSchema = zod_1.z.object({
 });
 const updateProjectSchema = zod_1.z
     .object({
-    name: zod_1.z.string().trim().min(1).max(200, 'name must be at most 200 characters').optional(),
-    description: zod_1.z.string().trim().max(600, 'description must be at most 600 characters').optional(),
+    name: zod_1.z
+        .string()
+        .trim()
+        .min(1)
+        .max(200, 'El campo "name" debe tener como máximo 200 caracteres.')
+        .optional(),
+    description: zod_1.z
+        .string()
+        .trim()
+        .max(600, 'El campo "description" debe tener como máximo 600 caracteres.')
+        .optional(),
 })
     .refine((data) => data.name !== undefined || data.description !== undefined, {
-    message: 'name or description is required',
+    message: 'Debes enviar al menos "name" o "description".',
 });
 const addMemberSchema = zod_1.z.preprocess((input) => {
     if (!input || typeof input !== 'object')
@@ -47,11 +71,11 @@ const addMemberSchema = zod_1.z.preprocess((input) => {
         role: body.role,
     };
 }, zod_1.z.object({
-    user_id: zod_1.z.string().min(1, 'user_id is required'),
+    user_id: zod_1.z.string().min(1, 'El campo "user_id" es requerido.'),
     role: zod_1.z.string().optional(),
 }));
 const updateMemberRoleSchema = zod_1.z.object({
-    role: zod_1.z.string().min(1, 'role is required'),
+    role: zod_1.z.string().min(1, 'El campo "role" es requerido.'),
 });
 async function createProjectController(req, res) {
     const payload = createProjectSchema.parse(req.body ?? {});

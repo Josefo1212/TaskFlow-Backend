@@ -9,24 +9,38 @@ exports.changeTaskStatusController = changeTaskStatusController;
 exports.changeTaskPriorityController = changeTaskPriorityController;
 exports.assignTaskController = assignTaskController;
 const zod_1 = require("zod");
+const grpc_error_mapper_1 = require("../utils/grpc-error-mapper");
 const task_service_1 = require("../services/task.service");
 const createTaskSchema = zod_1.z.object({
-    project_id: zod_1.z.string().min(1, 'project_id is required'),
+    project_id: zod_1.z.string().min(1, 'El campo "project_id" es requerido.'),
     assignee_id: zod_1.z.string().min(1).optional(),
-    title: zod_1.z.string().trim().min(1, 'title is required').max(200, 'title must be at most 200 characters'),
-    description: zod_1.z.string().trim().max(600, 'description must be at most 600 characters').optional(),
+    title: zod_1.z.string().trim().min(1, 'El campo "title" es requerido.').max(200, 'El campo "title" debe tener como máximo 200 caracteres.'),
+    description: zod_1.z
+        .string()
+        .trim()
+        .max(600, 'El campo "description" debe tener como máximo 600 caracteres.')
+        .optional(),
     status: zod_1.z.string().optional(),
     priority: zod_1.z.string().optional(),
     due_date: zod_1.z.string().optional(),
 });
 const updateTaskSchema = zod_1.z
     .object({
-    title: zod_1.z.string().trim().min(1).max(200, 'title must be at most 200 characters').optional(),
-    description: zod_1.z.string().trim().max(600, 'description must be at most 600 characters').optional(),
+    title: zod_1.z
+        .string()
+        .trim()
+        .min(1)
+        .max(200, 'El campo "title" debe tener como máximo 200 caracteres.')
+        .optional(),
+    description: zod_1.z
+        .string()
+        .trim()
+        .max(600, 'El campo "description" debe tener como máximo 600 caracteres.')
+        .optional(),
     due_date: zod_1.z.string().optional(),
 })
     .refine((data) => data.title !== undefined || data.description !== undefined || data.due_date !== undefined, {
-    message: 'title, description or due_date is required',
+    message: 'Debes enviar al menos "title", "description" o "due_date".',
 });
 const listTasksSchema = zod_1.z.object({
     page: zod_1.z.coerce.number().int().positive().optional(),
@@ -39,20 +53,27 @@ const listTasksSchema = zod_1.z.object({
     due_date_to: zod_1.z.string().optional(),
 });
 const changeStatusSchema = zod_1.z.object({
-    status: zod_1.z.string().min(1, 'status is required'),
+    status: zod_1.z.string().min(1, 'El campo "status" es requerido.'),
 });
 const changePrioritySchema = zod_1.z.object({
-    priority: zod_1.z.string().min(1, 'priority is required'),
+    priority: zod_1.z.string().min(1, 'El campo "priority" es requerido.'),
 });
 const assignSchema = zod_1.z.object({
     assignee_id: zod_1.z.string().min(1).optional(),
 });
 function requireAuthenticatedUserId(req) {
-    return req.user?.sub ?? '';
+    const userId = req.user?.sub;
+    if (!userId) {
+        throw new grpc_error_mapper_1.GatewayError('No autorizado.', 401);
+    }
+    return userId;
 }
 function requireTaskId(req) {
     const { taskId } = req.params;
-    return typeof taskId === 'string' ? taskId : '';
+    if (typeof taskId !== 'string' || !taskId.trim()) {
+        throw new grpc_error_mapper_1.GatewayError('Se requiere el parámetro "taskId".', 400);
+    }
+    return taskId;
 }
 async function createTaskController(req, res) {
     const payload = createTaskSchema.parse(req.body ?? {});
