@@ -16,7 +16,7 @@ function formatTimestamp(value) {
 function mapUserRow(row) {
     return {
         id: row.id,
-        name: row.name,
+        user: row.user,
         email: row.email,
         createdAt: formatTimestamp(row.created_at),
         updatedAt: formatTimestamp(row.updated_at),
@@ -25,7 +25,7 @@ function mapUserRow(row) {
 function mapUserBasicRow(row) {
     return {
         id: row.id,
-        name: row.name,
+        user: row.user,
         email: row.email,
     };
 }
@@ -36,13 +36,16 @@ function normalizeUserId(userId) {
     }
     return normalized;
 }
-function normalizeOptionalName(name) {
-    if (name === undefined) {
+function normalizeOptionalUser(user) {
+    if (user === undefined) {
         return undefined;
     }
-    const normalized = name.trim();
+    const normalized = user.trim();
     if (!normalized) {
-        throw new user_errors_1.UserServiceError('name cannot be empty', 400);
+        throw new user_errors_1.UserServiceError('user cannot be empty', 400);
+    }
+    if (normalized.length > 250) {
+        throw new user_errors_1.UserServiceError('user must be at most 250 characters', 400);
     }
     return normalized;
 }
@@ -53,6 +56,9 @@ function normalizeOptionalEmail(email) {
     const normalized = email.trim().toLowerCase();
     if (!normalized) {
         throw new user_errors_1.UserServiceError('email cannot be empty', 400);
+    }
+    if (normalized.length > 250) {
+        throw new user_errors_1.UserServiceError('email must be at most 250 characters', 400);
     }
     return normalized;
 }
@@ -82,7 +88,7 @@ async function updateProfile(input) {
     if (!existingUser) {
         throw new user_errors_1.UserServiceError('User not found', 404);
     }
-    const nextName = normalizeOptionalName(input.name) ?? existingUser.name;
+    const nextUser = normalizeOptionalUser(input.user) ?? existingUser.user;
     const nextEmail = normalizeOptionalEmail(input.email) ?? existingUser.email;
     if (nextEmail !== existingUser.email) {
         const userWithEmail = await (0, user_queries_1.findUserByEmail)(nextEmail);
@@ -90,13 +96,13 @@ async function updateProfile(input) {
             throw new user_errors_1.UserServiceError('Email already registered', 409);
         }
     }
-    if (nextName !== existingUser.name) {
-        const userWithName = await (0, user_queries_1.findUserByName)(nextName);
+    if (nextUser !== existingUser.user) {
+        const userWithName = await (0, user_queries_1.findUserByUser)(nextUser);
         if (userWithName && userWithName.id !== userId) {
             throw new user_errors_1.UserServiceError('Username already registered', 409);
         }
     }
-    const updatedUser = await (0, user_queries_1.updateUserProfile)(userId, nextName, nextEmail);
+    const updatedUser = await (0, user_queries_1.updateUserProfile)(userId, nextUser, nextEmail);
     return mapUserRow(updatedUser);
 }
 async function listUsers(input) {

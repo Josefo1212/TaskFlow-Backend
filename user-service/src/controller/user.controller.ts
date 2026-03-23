@@ -18,7 +18,7 @@ interface GetProfileGrpcRequest {
 
 interface UpdateProfileGrpcRequest {
 	user_id: string;
-	name?: string;
+	user?: string;
 	email?: string;
 }
 
@@ -47,7 +47,7 @@ interface GetBasicInfoGrpcRequest {
 
 interface UserGrpcResponse {
 	id: string;
-	name: string;
+	user: string;
 	email: string;
 	created_at: string;
 	updated_at: string;
@@ -55,7 +55,7 @@ interface UserGrpcResponse {
 
 interface UserBasicGrpcResponse {
 	id: string;
-	name: string;
+	user: string;
 	email: string;
 }
 
@@ -126,7 +126,7 @@ function toGrpcServiceError(error: unknown): grpc.ServiceError {
 function mapUser(user: UserProfile): UserGrpcResponse {
 	return {
 		id: user.id,
-		name: user.name,
+		user: user.user,
 		email: user.email,
 		created_at: user.createdAt,
 		updated_at: user.updatedAt,
@@ -136,7 +136,7 @@ function mapUser(user: UserProfile): UserGrpcResponse {
 function mapBasicUser(user: UserBasic): UserBasicGrpcResponse {
 	return {
 		id: user.id,
-		name: user.name,
+		user: user.user,
 		email: user.email,
 	};
 }
@@ -162,14 +162,14 @@ export const userController: grpc.UntypedServiceImplementation = {
 		try {
 			const payload: {
 				userId: string;
-				name?: string;
+				user?: string;
 				email?: string;
 			} = {
 				userId: call.request.user_id ?? '',
 			};
 
-			if (call.request.name?.trim()) {
-				payload.name = call.request.name;
+			if (call.request.user?.trim()) {
+				payload.user = call.request.user;
 			}
 
 			if (call.request.email?.trim()) {

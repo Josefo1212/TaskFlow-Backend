@@ -1,13 +1,13 @@
 export interface UserProfile {
     id: string;
-    name: string;
+    user: string;
     email: string;
     createdAt: string;
     updatedAt: string;
 }
 export interface UserBasic {
     id: string;
-    name: string;
+    user: string;
     email: string;
 }
 interface GetProfileInput {
@@ -15,7 +15,7 @@ interface GetProfileInput {
 }
 interface UpdateProfileInput {
     userId: string;
-    name?: string;
+    user?: string;
     email?: string;
 }
 interface ListUsersInput {

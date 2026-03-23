@@ -82,7 +82,7 @@ function mapAuthResultToGrpcResponse(data) {
     return {
         user_id: data.user.id,
         email: data.user.email,
-        name: data.user.name,
+        user: data.user.user,
         access_token: data.accessToken,
         refresh_token: data.refreshToken,
         refresh_expires_at: data.refreshExpiresAt.toISOString(),
@@ -92,11 +92,11 @@ exports.authController = {
     Register: async (call, callback) => {
         try {
             const data = await (0, auth_services_1.register)({
-                name: call.request.name ?? '',
+                user: call.request.user ?? '',
                 email: call.request.email ?? '',
                 password: call.request.password ?? '',
             });
-            console.log(`[Register] Usuario registrado: ${data.user.name}`);
+            console.log(`[Register] Usuario registrado: ${data.user.user}`);
             callback(null, mapAuthResultToGrpcResponse(data));
         }
         catch (error) {
@@ -107,10 +107,10 @@ exports.authController = {
     Login: async (call, callback) => {
         try {
             const data = await (0, auth_services_1.login)({
-                name: call.request.name ?? '',
+                user: call.request.user ?? '',
                 password: call.request.password ?? '',
             });
-            console.log(`[Login] Usuario autenticado: ${data.user.name}`);
+            console.log(`[Login] Usuario autenticado: ${data.user.user}`);
             callback(null, mapAuthResultToGrpcResponse(data));
         }
         catch (error) {
@@ -121,7 +121,7 @@ exports.authController = {
     ForgotPassword: async (call, callback) => {
         try {
             const data = await (0, auth_services_1.forgotPassword)({
-                name: call.request.name ?? '',
+                user: call.request.user ?? '',
             });
             console.log('[ForgotPassword] Token generado');
             callback(null, { token: data.token });

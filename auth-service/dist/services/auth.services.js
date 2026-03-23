@@ -20,7 +20,7 @@ async function issueTokensForUser(user) {
     const accessToken = (0, token_1.generateAccessToken)({
         sub: user.id,
         email: user.email,
-        name: user.name,
+        user: user.user,
     }, config.jwtSecret, config.jwtAccessExpiresIn);
     const refreshToken = (0, token_1.generateRefreshToken)();
     const refreshExpiresAt = (0, token_1.calculateRefreshExpiration)(config.refreshTokenTtlDays);
@@ -29,7 +29,7 @@ async function issueTokensForUser(user) {
         user: {
             id: user.id,
             email: user.email,
-            name: user.name,
+            user: user.user,
         },
         accessToken,
         refreshToken,
@@ -37,49 +37,55 @@ async function issueTokensForUser(user) {
     };
 }
 async function register(input) {
-    const name = input.name?.trim();
+    const username = input.user?.trim();
     const email = input.email?.trim().toLowerCase();
     const password = input.password;
-    if (!name || !email || !password) {
-        throw new auth_errors_1.AuthServiceError('Name, email and password are required', 400);
+    if (!username || !email || !password) {
+        throw new auth_errors_1.AuthServiceError('User, email and password are required', 400);
     }
-    if (password.length < 8) {
-        throw new auth_errors_1.AuthServiceError('Password must be at least 8 characters', 400);
+    if (username.length > 250) {
+        throw new auth_errors_1.AuthServiceError('User must be at most 250 characters', 400);
+    }
+    if (email.length > 250) {
+        throw new auth_errors_1.AuthServiceError('Email must be at most 250 characters', 400);
+    }
+    if (password.length < 8 || password.length > 15) {
+        throw new auth_errors_1.AuthServiceError('Password must be between 8 and 15 characters', 400);
     }
     const existingUser = await (0, auth_queries_1.findUserByEmail)(email);
     if (existingUser) {
         throw new auth_errors_1.AuthServiceError('Email already registered', 409);
     }
-    const existingUsername = await (0, auth_queries_1.findUserByName)(name);
+    const existingUsername = await (0, auth_queries_1.findUserByUser)(username);
     if (existingUsername) {
         throw new auth_errors_1.AuthServiceError('Username already registered', 409);
     }
     const passwordHash = await bcryptjs_1.default.hash(password, 10);
-    const user = await (0, auth_queries_1.createUser)({
-        name,
+    const createdUser = await (0, auth_queries_1.createUser)({
+        user: username,
         email,
         passwordHash,
     });
-    return issueTokensForUser(user);
+    return issueTokensForUser(createdUser);
 }
 async function login(input) {
-    const name = input.name?.trim();
+    const user = input.user?.trim();
     const password = input.password;
-    if (!name || !password) {
+    if (!user || !password) {
         throw new auth_errors_1.AuthServiceError('Username and password are required', 400);
     }
-    const user = await (0, auth_queries_1.findUserByName)(name);
-    if (!user) {
+    const found = await (0, auth_queries_1.findUserByUser)(user);
+    if (!found) {
         throw new auth_errors_1.AuthServiceError('Invalid credentials', 401);
     }
-    const isPasswordValid = await bcryptjs_1.default.compare(password, user.password);
+    const isPasswordValid = await bcryptjs_1.default.compare(password, found.password);
     if (!isPasswordValid) {
         throw new auth_errors_1.AuthServiceError('Invalid credentials', 401);
     }
     return issueTokensForUser({
-        id: user.id,
-        email: user.email,
-        name: user.name,
+        id: found.id,
+        email: found.email,
+        user: found.user,
     });
 }
 async function refresh(input) {
@@ -95,20 +101,20 @@ async function refresh(input) {
     const accessToken = (0, token_1.generateAccessToken)({
         sub: user.id,
         email: user.email,
-        name: user.name,
+        user: user.user,
     }, config.jwtSecret, config.jwtAccessExpiresIn);
     return { accessToken };
 }
 async function forgotPassword(input) {
-    const name = input.name?.trim();
-    if (!name) {
-        throw new auth_errors_1.AuthServiceError('Name is required', 400);
+    const user = input.user?.trim();
+    if (!user) {
+        throw new auth_errors_1.AuthServiceError('User is required', 400);
     }
     const ttlMinutes = Number(process.env.PASSWORD_RESET_TTL_MINUTES ?? 15);
     const token = (0, password_reset_1.generatePasswordResetToken)();
     // Guardamos el nombre; si el usuario no existe, guardamos un marcador para no filtrar info.
-    const user = await (0, auth_queries_1.findUserByName)(name);
-    await (0, password_reset_1.storePasswordResetToken)(token, user ? user.name : '__invalid__', ttlMinutes);
+    const found = await (0, auth_queries_1.findUserByUser)(user);
+    await (0, password_reset_1.storePasswordResetToken)(token, found ? found.user : '__invalid__', ttlMinutes);
     return { token };
 }
 async function resetPassword(input) {
@@ -120,20 +126,20 @@ async function resetPassword(input) {
     if (!password) {
         throw new auth_errors_1.AuthServiceError('Password is required', 400);
     }
-    if (password.length < 8) {
-        throw new auth_errors_1.AuthServiceError('Password must be at least 8 characters', 400);
+    if (password.length < 8 || password.length > 15) {
+        throw new auth_errors_1.AuthServiceError('Password must be between 8 and 15 characters', 400);
     }
-    const name = await (0, password_reset_1.getPasswordResetName)(token);
-    if (!name || name === '__invalid__') {
+    const user = await (0, password_reset_1.getPasswordResetUser)(token);
+    if (!user || user === '__invalid__') {
         throw new auth_errors_1.AuthServiceError('Token is invalid or expired', 400);
     }
-    const user = await (0, auth_queries_1.findUserByName)(name);
-    if (!user) {
+    const found = await (0, auth_queries_1.findUserByUser)(user);
+    if (!found) {
         await (0, password_reset_1.deletePasswordResetToken)(token);
         throw new auth_errors_1.AuthServiceError('Token is invalid or expired', 400);
     }
     const passwordHash = await bcryptjs_1.default.hash(password, 10);
-    const updated = await (0, auth_queries_1.updateUserPasswordByName)(name, passwordHash);
+    const updated = await (0, auth_queries_1.updateUserPasswordByUser)(user, passwordHash);
     await (0, password_reset_1.deletePasswordResetToken)(token);
     if (!updated) {
         throw new auth_errors_1.AuthServiceError('Failed to update password', 500);

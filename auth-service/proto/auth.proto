@@ -12,7 +12,7 @@ service AuthService {
 }
 
 message RegisterRequest {
-	string name = 1;
+	string user = 1;
 	string email = 2;
 	string password = 3;
 }
@@ -20,28 +20,28 @@ message RegisterRequest {
 message RegisterResponse {
 	string user_id = 1;
 	string email = 2;
-	string name = 3;
+	string user = 3;
 	string access_token = 4;
 	string refresh_token = 5;
 	string refresh_expires_at = 6;
 }
 
 message LoginRequest {
-	string name = 1;
+	string user = 1;
 	string password = 2;
 }
 
 message LoginResponse {
 	string user_id = 1;
 	string email = 2;
-	string name = 3;
+	string user = 3;
 	string access_token = 4;
 	string refresh_token = 5;
 	string refresh_expires_at = 6;
 }
 
 message ForgotPasswordRequest {
-	string name = 1;
+	string user = 1;
 }
 
 message ForgotPasswordResponse {

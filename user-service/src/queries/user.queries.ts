@@ -5,7 +5,7 @@ type SqlMap = Record<string, string>;
 
 interface UserRow {
 	id: string;
-	name: string;
+	user: string;
 	email: string;
 	created_at: string | Date;
 	updated_at: string | Date;
@@ -13,7 +13,7 @@ interface UserRow {
 
 interface UserBasicRow {
 	id: string;
-	name: string;
+	user: string;
 	email: string;
 }
 
@@ -42,20 +42,20 @@ export async function findUserByEmail(email: string): Promise<UserRow | null> {
 	return rows[0] ?? null;
 }
 
-export async function findUserByName(name: string): Promise<UserRow | null> {
-	const { rows } = await pool.query<UserRow>(getQuery('user.getByName'), [name]);
+export async function findUserByUser(user: string): Promise<UserRow | null> {
+	const { rows } = await pool.query<UserRow>(getQuery('user.getByUser'), [user]);
 	return rows[0] ?? null;
 }
 
-export async function updateUserProfile(userId: string, name: string, email: string): Promise<UserRow> {
-	const { rows } = await pool.query<UserRow>(getQuery('user.updateProfile'), [userId, name, email]);
-	const user = rows[0];
+export async function updateUserProfile(userId: string, user: string, email: string): Promise<UserRow> {
+	const { rows } = await pool.query<UserRow>(getQuery('user.updateProfile'), [userId, user, email]);
+	const updatedUser = rows[0];
 
-	if (!user) {
+	if (!updatedUser) {
 		throw new Error('Failed to update user profile');
 	}
 
-	return user;
+	return updatedUser;
 }
 
 export async function listUsersQuery(search: string, limit: number, offset: number): Promise<UserRow[]> {

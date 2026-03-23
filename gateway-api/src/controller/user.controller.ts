@@ -13,11 +13,11 @@ import {
 
 const updateProfileSchema = z
 	.object({
-		name: z.string().min(1, 'name cannot be empty').optional(),
-		email: z.email('email must be valid').optional(),
+		user: z.string().min(1, 'user cannot be empty').max(250, 'user must be at most 250 characters').optional(),
+		email: z.email('email must be valid').max(250, 'email must be at most 250 characters').optional(),
 	})
-	.refine((data) => data.name !== undefined || data.email !== undefined, {
-		message: 'name or email is required',
+	.refine((data) => data.user !== undefined || data.email !== undefined, {
+		message: 'user or email is required',
 	});
 
 const listUsersSchema = z.object({
@@ -60,14 +60,14 @@ export async function updateMyProfileController(req: AuthenticatedRequest, res: 
 	const payload = updateProfileSchema.parse(req.body ?? {});
 	const requestPayload: {
 		user_id: string;
-		name?: string;
+		user?: string;
 		email?: string;
 	} = {
 		user_id: requireAuthenticatedUserId(req),
 	};
 
-	if (payload.name !== undefined) {
-		requestPayload.name = payload.name;
+	if (payload.user !== undefined) {
+		requestPayload.user = payload.user;
 	}
 
 	if (payload.email !== undefined) {

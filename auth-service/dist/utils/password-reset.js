@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.generatePasswordResetToken = generatePasswordResetToken;
 exports.storePasswordResetToken = storePasswordResetToken;
-exports.getPasswordResetName = getPasswordResetName;
+exports.getPasswordResetUser = getPasswordResetUser;
 exports.deletePasswordResetToken = deletePasswordResetToken;
 const crypto_1 = require("crypto");
 const redis_1 = require("../config/redis");
@@ -16,12 +16,12 @@ function getPasswordResetTtlSeconds(ttlMinutes) {
 function generatePasswordResetToken() {
     return (0, crypto_1.randomBytes)(32).toString('hex');
 }
-async function storePasswordResetToken(token, name, ttlMinutes) {
-    await (0, redis_1.setRedisValue)(getPasswordResetKey(token), name, getPasswordResetTtlSeconds(ttlMinutes));
+async function storePasswordResetToken(token, user, ttlMinutes) {
+    await (0, redis_1.setRedisValue)(getPasswordResetKey(token), user, getPasswordResetTtlSeconds(ttlMinutes));
 }
-async function getPasswordResetName(token) {
-    const name = await (0, redis_1.getRedisValue)(getPasswordResetKey(token));
-    return name?.trim() ? name : null;
+async function getPasswordResetUser(token) {
+    const user = await (0, redis_1.getRedisValue)(getPasswordResetKey(token));
+    return user?.trim() ? user : null;
 }
 async function deletePasswordResetToken(token) {
     return (0, redis_1.deleteRedisKey)(getPasswordResetKey(token));

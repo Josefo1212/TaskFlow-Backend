@@ -13,7 +13,7 @@ export interface AuthRuntimeConfig {
 export interface AccessTokenPayload {
 	sub: string;
 	email: string;
-	name: string;
+	user: string;
 }
 
 export function getAuthRuntimeConfig(): AuthRuntimeConfig {

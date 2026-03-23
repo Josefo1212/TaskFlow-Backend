@@ -30,7 +30,7 @@ function authenticateRequest(req, _res, next) {
             decoded === null ||
             typeof decoded.sub !== 'string' ||
             typeof decoded.email !== 'string' ||
-            typeof decoded.name !== 'string') {
+            typeof decoded.user !== 'string') {
             throw new grpc_error_mapper_1.GatewayError('Invalid access token payload', 401);
         }
         req.user = decoded;

@@ -4,7 +4,7 @@ import * as protoLoader from '@grpc/proto-loader';
 import { env } from '../config/env';
 
 export interface RegisterGrpcRequest {
-	name: string;
+	user: string;
 	email: string;
 	password: string;
 }
@@ -12,14 +12,14 @@ export interface RegisterGrpcRequest {
 export interface AuthUserGrpcResponse {
 	user_id: string;
 	email: string;
-	name: string;
+	user: string;
 	access_token: string;
 	refresh_token: string;
 	refresh_expires_at: string;
 }
 
 export interface LoginGrpcRequest {
-	name: string;
+	user: string;
 	password: string;
 }
 
@@ -40,7 +40,7 @@ export interface LogoutGrpcResponse {
 }
 
 export interface ForgotPasswordGrpcRequest {
-	name: string;
+	user: string;
 }
 
 export interface ForgotPasswordGrpcResponse {

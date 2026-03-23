@@ -2,8 +2,8 @@ import bcrypt from 'bcryptjs';
 import {
 	createUser,
 	findUserByEmail,
-	findUserByName,
-	updateUserPasswordByName,
+	findUserByUser,
+	updateUserPasswordByUser,
 } from '../queries/auth.queries';
 import { AuthServiceError } from '../utils/auth-errors';
 import {
@@ -22,19 +22,19 @@ import {
 import {
 	deletePasswordResetToken,
 	generatePasswordResetToken,
-	getPasswordResetName,
+	getPasswordResetUser,
 	storePasswordResetToken,
 } from '../utils/password-reset';
 
 // --- Tipos ---
 export interface RegisterInput {
-	name: string;
+	user: string;
 	email: string;
 	password: string;
 }
 
 export interface LoginInput {
-	name: string;
+	user: string;
 	password: string;
 }
 
@@ -47,7 +47,7 @@ export interface RefreshInput {
 }
 
 export interface ForgotPasswordInput {
-	name: string;
+	user: string;
 }
 
 export interface ForgotPasswordResult {
@@ -67,7 +67,7 @@ export interface AuthResult {
 	user: {
 		id: string;
 		email: string;
-		name: string;
+		user: string;
 	};
 	accessToken: string;
 	refreshToken: string;
@@ -91,7 +91,7 @@ async function issueTokensForUser(user: UserIdentity): Promise<AuthResult> {
 		{
 			sub: user.id,
 			email: user.email,
-			name: user.name,
+			user: user.user,
 		},
 		config.jwtSecret,
 		config.jwtAccessExpiresIn,
@@ -105,7 +105,7 @@ async function issueTokensForUser(user: UserIdentity): Promise<AuthResult> {
 		user: {
 			id: user.id,
 			email: user.email,
-			name: user.name,
+			user: user.user,
 		},
 		accessToken,
 		refreshToken,
@@ -114,16 +114,24 @@ async function issueTokensForUser(user: UserIdentity): Promise<AuthResult> {
 }
 
 export async function register(input: RegisterInput): Promise<RegisterResult> {
-	const name = input.name?.trim();
+	const username = input.user?.trim();
 	const email = input.email?.trim().toLowerCase();
 	const password = input.password;
 
-	if (!name || !email || !password) {
-		throw new AuthServiceError('Name, email and password are required', 400);
+	if (!username || !email || !password) {
+		throw new AuthServiceError('User, email and password are required', 400);
 	}
 
-	if (password.length < 8) {
-		throw new AuthServiceError('Password must be at least 8 characters', 400);
+	if (username.length > 250) {
+		throw new AuthServiceError('User must be at most 250 characters', 400);
+	}
+
+	if (email.length > 250) {
+		throw new AuthServiceError('Email must be at most 250 characters', 400);
+	}
+
+	if (password.length < 8 || password.length > 15) {
+		throw new AuthServiceError('Password must be between 8 and 15 characters', 400);
 	}
 
 	const existingUser = await findUserByEmail(email);
@@ -131,43 +139,43 @@ export async function register(input: RegisterInput): Promise<RegisterResult> {
 		throw new AuthServiceError('Email already registered', 409);
 	}
 
-	const existingUsername = await findUserByName(name);
+	const existingUsername = await findUserByUser(username);
 	if (existingUsername) {
 		throw new AuthServiceError('Username already registered', 409);
 	}
 
 	const passwordHash = await bcrypt.hash(password, 10);
-	const user = await createUser({
-		name,
+	const createdUser = await createUser({
+		user: username,
 		email,
 		passwordHash,
 	});
 
-	return issueTokensForUser(user);
+	return issueTokensForUser(createdUser);
 }
 
 export async function login(input: LoginInput): Promise<LoginResult> {
-	const name = input.name?.trim();
+	const user = input.user?.trim();
 	const password = input.password;
 
-	if (!name || !password) {
+	if (!user || !password) {
 		throw new AuthServiceError('Username and password are required', 400);
 	}
 
-	const user = await findUserByName(name);
-	if (!user) {
+	const found = await findUserByUser(user);
+	if (!found) {
 		throw new AuthServiceError('Invalid credentials', 401);
 	}
 
-	const isPasswordValid = await bcrypt.compare(password, user.password);
+	const isPasswordValid = await bcrypt.compare(password, found.password);
 	if (!isPasswordValid) {
 		throw new AuthServiceError('Invalid credentials', 401);
 	}
 
 	return issueTokensForUser({
-		id: user.id,
-		email: user.email,
-		name: user.name,
+		id: found.id,
+		email: found.email,
+		user: found.user,
 	});
 }
 
@@ -188,7 +196,7 @@ export async function refresh(input: RefreshInput): Promise<RefreshResult> {
 		{
 			sub: user.id,
 			email: user.email,
-			name: user.name,
+			user: user.user,
 		},
 		config.jwtSecret,
 		config.jwtAccessExpiresIn,
@@ -198,17 +206,17 @@ export async function refresh(input: RefreshInput): Promise<RefreshResult> {
 }
 
 export async function forgotPassword(input: ForgotPasswordInput): Promise<ForgotPasswordResult> {
-	const name = input.name?.trim();
-	if (!name) {
-		throw new AuthServiceError('Name is required', 400);
+	const user = input.user?.trim();
+	if (!user) {
+		throw new AuthServiceError('User is required', 400);
 	}
 
 	const ttlMinutes = Number(process.env.PASSWORD_RESET_TTL_MINUTES ?? 15);
 	const token = generatePasswordResetToken();
 
 	// Guardamos el nombre; si el usuario no existe, guardamos un marcador para no filtrar info.
-	const user = await findUserByName(name);
-	await storePasswordResetToken(token, user ? user.name : '__invalid__', ttlMinutes);
+	const found = await findUserByUser(user);
+	await storePasswordResetToken(token, found ? found.user : '__invalid__', ttlMinutes);
 	return { token };
 }
 
@@ -224,23 +232,23 @@ export async function resetPassword(input: ResetPasswordInput): Promise<ResetPas
 		throw new AuthServiceError('Password is required', 400);
 	}
 
-	if (password.length < 8) {
-		throw new AuthServiceError('Password must be at least 8 characters', 400);
+	if (password.length < 8 || password.length > 15) {
+		throw new AuthServiceError('Password must be between 8 and 15 characters', 400);
 	}
 
-	const name = await getPasswordResetName(token);
-	if (!name || name === '__invalid__') {
+	const user = await getPasswordResetUser(token);
+	if (!user || user === '__invalid__') {
 		throw new AuthServiceError('Token is invalid or expired', 400);
 	}
 
-	const user = await findUserByName(name);
-	if (!user) {
+	const found = await findUserByUser(user);
+	if (!found) {
 		await deletePasswordResetToken(token);
 		throw new AuthServiceError('Token is invalid or expired', 400);
 	}
 
 	const passwordHash = await bcrypt.hash(password, 10);
-	const updated = await updateUserPasswordByName(name, passwordHash);
+	const updated = await updateUserPasswordByUser(user, passwordHash);
 	await deletePasswordResetToken(token);
 
 	if (!updated) {

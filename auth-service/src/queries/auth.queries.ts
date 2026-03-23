@@ -7,17 +7,17 @@ interface UserRecord {
 	id: string;
 	email: string;
 	password: string;
-	name: string;
+	user: string;
 }
 
 interface CreatedUserRecord {
 	id: string;
 	email: string;
-	name: string;
+	user: string;
 }
 
 interface CreateUserParams {
-	name: string;
+	user: string;
 	email: string;
 	passwordHash: string;
 }
@@ -25,7 +25,7 @@ interface CreateUserParams {
 interface UpdatedUserRecord {
 	id: string;
 	email: string;
-	name: string;
+	user: string;
 }
 
 const queries: SqlMap = rawQueries;
@@ -43,26 +43,26 @@ export async function findUserByEmail(email: string): Promise<UserRecord | null>
 	return rows[0] ?? null;
 }
 
-export async function findUserByName(name: string): Promise<UserRecord | null> {
-	const { rows } = await pool.query<UserRecord>(getQuery('auth.getUserByName'), [name]);
+export async function findUserByUser(user: string): Promise<UserRecord | null> {
+	const { rows } = await pool.query<UserRecord>(getQuery('auth.getUserByUser'), [user]);
 	return rows[0] ?? null;
 }
 
 export async function createUser(params: CreateUserParams): Promise<CreatedUserRecord> {
-	const { name, email, passwordHash } = params;
+	const { user, email, passwordHash } = params;
 
 	const { rows } = await pool.query<CreatedUserRecord>(getQuery('auth.createUser'), [
-		name,
+		user,
 		email,
 		passwordHash,
 	]);
 
-	const user = rows[0];
-	if (!user) {
+	const createdUser = rows[0];
+	if (!createdUser) {
 		throw new Error('Failed to create user');
 	}
 
-	return user;
+	return createdUser;
 }
 
 export async function updateUserPasswordByEmail(
@@ -76,13 +76,13 @@ export async function updateUserPasswordByEmail(
 	return rows[0] ?? null;
 }
 
-export async function updateUserPasswordByName(
-	name: string,
+export async function updateUserPasswordByUser(
+	user: string,
 	passwordHash: string,
 ): Promise<UpdatedUserRecord | null> {
-	const { rows } = await pool.query<UpdatedUserRecord>(getQuery('auth.updateUserPasswordByName'), [
+	const { rows } = await pool.query<UpdatedUserRecord>(getQuery('auth.updateUserPasswordByUser'), [
 		passwordHash,
-		name,
+		user,
 	]);
 	return rows[0] ?? null;
 }

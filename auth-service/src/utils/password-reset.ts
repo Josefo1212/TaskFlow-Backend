@@ -17,15 +17,15 @@ export function generatePasswordResetToken(): string {
 
 export async function storePasswordResetToken(
   token: string,
-  name: string,
+  user: string,
   ttlMinutes: number,
 ): Promise<void> {
-  await setRedisValue(getPasswordResetKey(token), name, getPasswordResetTtlSeconds(ttlMinutes));
+  await setRedisValue(getPasswordResetKey(token), user, getPasswordResetTtlSeconds(ttlMinutes));
 }
 
-export async function getPasswordResetName(token: string): Promise<string | null> {
-  const name = await getRedisValue(getPasswordResetKey(token));
-  return name?.trim() ? name : null;
+export async function getPasswordResetUser(token: string): Promise<string | null> {
+  const user = await getRedisValue(getPasswordResetKey(token));
+  return user?.trim() ? user : null;
 }
 
 export async function deletePasswordResetToken(token: string): Promise<boolean> {

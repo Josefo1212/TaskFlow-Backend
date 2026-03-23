@@ -17,13 +17,16 @@ import {
 import { GatewayError } from '../utils/grpc-error-mapper';
 
 const registerSchema = z.object({
-	name: z.string().min(1, 'name is required'),
-	email: z.email('email must be valid'),
-	password: z.string().min(6, 'password must have at least 6 characters'),
+	user: z.string().min(1, 'user is required').max(250, 'user must be at most 250 characters'),
+	email: z.email('email must be valid').max(250, 'email must be at most 250 characters'),
+	password: z
+		.string()
+		.min(8, 'password must have at least 8 characters')
+		.max(15, 'password must be at most 15 characters'),
 });
 
 const loginSchema = z.object({
-	name: z.string().min(1, 'name is required'),
+	user: z.string().min(1, 'user is required'),
 	password: z.string().min(1, 'password is required'),
 });
 
@@ -32,12 +35,15 @@ const refreshSchema = z.object({
 });
 
 const forgotPasswordSchema = z.object({
-	name: z.string().min(1, 'name is required'),
+	user: z.string().min(1, 'user is required'),
 });
 
 const resetPasswordSchema = z.object({
 	token: z.string().min(1, 'token is required'),
-	password: z.string().min(8, 'password must have at least 8 characters'),
+	password: z
+		.string()
+		.min(8, 'password must have at least 8 characters')
+		.max(15, 'password must be at most 15 characters'),
 });
 
 function getRefreshTokenFromRequest(req: Request): string {
@@ -60,7 +66,7 @@ function buildAuthResponse(response: Awaited<ReturnType<typeof loginWithAuthServ
 	return {
 		user_id: response.user_id,
 		email: response.email,
-		name: response.name,
+		user: response.user,
 		access_token: response.access_token,
 	};
 }
@@ -110,7 +116,7 @@ export async function meController(req: AuthenticatedRequest, res: Response) {
 
 export async function forgotPasswordController(req: Request, res: Response) {
 	const payload = forgotPasswordSchema.parse(req.body);
-	const response = await forgotPasswordWithAuthService({ name: payload.name });
+	const response = await forgotPasswordWithAuthService({ user: payload.user });
 	res.status(200).json(response);
 }
 

@@ -6,7 +6,7 @@ import { GatewayError } from '../utils/grpc-error-mapper';
 export interface AuthenticatedUserPayload extends JwtPayload {
 	sub: string;
 	email: string;
-	name: string;
+	user: string;
 }
 
 export interface AuthenticatedRequest extends Request {
@@ -44,7 +44,7 @@ export function authenticateRequest(req: AuthenticatedRequest, _res: Response, n
 			decoded === null ||
 			typeof decoded.sub !== 'string' ||
 			typeof decoded.email !== 'string' ||
-			typeof decoded.name !== 'string'
+			typeof decoded.user !== 'string'
 		) {
 			throw new GatewayError('Invalid access token payload', 401);
 		}

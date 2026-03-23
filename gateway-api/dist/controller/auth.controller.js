@@ -12,23 +12,29 @@ const auth_service_1 = require("../services/auth.service");
 const auth_cookie_1 = require("../utils/auth-cookie");
 const grpc_error_mapper_1 = require("../utils/grpc-error-mapper");
 const registerSchema = zod_1.z.object({
-    name: zod_1.z.string().min(1, 'name is required'),
-    email: zod_1.z.email('email must be valid'),
-    password: zod_1.z.string().min(6, 'password must have at least 6 characters'),
+    user: zod_1.z.string().min(1, 'user is required').max(250, 'user must be at most 250 characters'),
+    email: zod_1.z.email('email must be valid').max(250, 'email must be at most 250 characters'),
+    password: zod_1.z
+        .string()
+        .min(8, 'password must have at least 8 characters')
+        .max(15, 'password must be at most 15 characters'),
 });
 const loginSchema = zod_1.z.object({
-    name: zod_1.z.string().min(1, 'name is required'),
+    user: zod_1.z.string().min(1, 'user is required'),
     password: zod_1.z.string().min(1, 'password is required'),
 });
 const refreshSchema = zod_1.z.object({
     refresh_token: zod_1.z.string().min(1, 'refresh_token is required').optional(),
 });
 const forgotPasswordSchema = zod_1.z.object({
-    name: zod_1.z.string().min(1, 'name is required'),
+    user: zod_1.z.string().min(1, 'user is required'),
 });
 const resetPasswordSchema = zod_1.z.object({
     token: zod_1.z.string().min(1, 'token is required'),
-    password: zod_1.z.string().min(8, 'password must have at least 8 characters'),
+    password: zod_1.z
+        .string()
+        .min(8, 'password must have at least 8 characters')
+        .max(15, 'password must be at most 15 characters'),
 });
 function getRefreshTokenFromRequest(req) {
     const cookieToken = (0, auth_cookie_1.readRefreshTokenCookie)(req.cookies);
@@ -46,7 +52,7 @@ function buildAuthResponse(response) {
     return {
         user_id: response.user_id,
         email: response.email,
-        name: response.name,
+        user: response.user,
         access_token: response.access_token,
     };
 }
@@ -86,7 +92,7 @@ async function meController(req, res) {
 }
 async function forgotPasswordController(req, res) {
     const payload = forgotPasswordSchema.parse(req.body);
-    const response = await (0, auth_service_1.forgotPasswordWithAuthService)({ name: payload.name });
+    const response = await (0, auth_service_1.forgotPasswordWithAuthService)({ user: payload.user });
     res.status(200).json(response);
 }
 async function resetPasswordController(req, res) {

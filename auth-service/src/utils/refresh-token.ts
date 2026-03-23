@@ -3,7 +3,7 @@ import { deleteRedisKey, getRedisValue, setRedisValue } from '../config/redis';
 export interface UserIdentity {
 	id: string;
 	email: string;
-	name: string;
+	user: string;
 }
 
 const REFRESH_TOKEN_PREFIX = 'auth:refresh:';
@@ -35,7 +35,7 @@ export async function getRefreshTokenUser(refreshToken: string): Promise<UserIde
 	}
 
 	const parsed = JSON.parse(payload) as UserIdentity;
-	if (!parsed.id || !parsed.email || !parsed.name) {
+	if (!parsed.id || !parsed.email || !parsed.user) {
 		return null;
 	}
 

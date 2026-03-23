@@ -2,7 +2,7 @@ import {
 	countUsersQuery,
 	findUserByEmail,
 	findUserById,
-	findUserByName,
+	findUserByUser,
 	getUsersByIdsQuery,
 	listUsersQuery,
 	searchUsersQuery,
@@ -14,7 +14,7 @@ import { UserServiceError } from '../utils/user-errors';
 
 export interface UserProfile {
 	id: string;
-	name: string;
+	user: string;
 	email: string;
 	createdAt: string;
 	updatedAt: string;
@@ -22,7 +22,7 @@ export interface UserProfile {
 
 export interface UserBasic {
 	id: string;
-	name: string;
+	user: string;
 	email: string;
 }
 
@@ -32,7 +32,7 @@ interface GetProfileInput {
 
 interface UpdateProfileInput {
 	userId: string;
-	name?: string;
+	user?: string;
 	email?: string;
 }
 
@@ -79,7 +79,7 @@ function formatTimestamp(value: string | Date): string {
 function mapUserRow(row: UserRow): UserProfile {
 	return {
 		id: row.id,
-		name: row.name,
+		user: row.user,
 		email: row.email,
 		createdAt: formatTimestamp(row.created_at),
 		updatedAt: formatTimestamp(row.updated_at),
@@ -89,7 +89,7 @@ function mapUserRow(row: UserRow): UserProfile {
 function mapUserBasicRow(row: UserBasicRow): UserBasic {
 	return {
 		id: row.id,
-		name: row.name,
+		user: row.user,
 		email: row.email,
 	};
 }
@@ -103,14 +103,18 @@ function normalizeUserId(userId: string): string {
 	return normalized;
 }
 
-function normalizeOptionalName(name?: string): string | undefined {
-	if (name === undefined) {
+function normalizeOptionalUser(user?: string): string | undefined {
+	if (user === undefined) {
 		return undefined;
 	}
 
-	const normalized = name.trim();
+	const normalized = user.trim();
 	if (!normalized) {
-		throw new UserServiceError('name cannot be empty', 400);
+		throw new UserServiceError('user cannot be empty', 400);
+	}
+
+	if (normalized.length > 250) {
+		throw new UserServiceError('user must be at most 250 characters', 400);
 	}
 
 	return normalized;
@@ -124,6 +128,10 @@ function normalizeOptionalEmail(email?: string): string | undefined {
 	const normalized = email.trim().toLowerCase();
 	if (!normalized) {
 		throw new UserServiceError('email cannot be empty', 400);
+	}
+
+	if (normalized.length > 250) {
+		throw new UserServiceError('email must be at most 250 characters', 400);
 	}
 
 	return normalized;
@@ -164,7 +172,7 @@ export async function updateProfile(input: UpdateProfileInput): Promise<UserProf
 		throw new UserServiceError('User not found', 404);
 	}
 
-	const nextName = normalizeOptionalName(input.name) ?? existingUser.name;
+	const nextUser = normalizeOptionalUser(input.user) ?? existingUser.user;
 	const nextEmail = normalizeOptionalEmail(input.email) ?? existingUser.email;
 
 	if (nextEmail !== existingUser.email) {
@@ -174,14 +182,14 @@ export async function updateProfile(input: UpdateProfileInput): Promise<UserProf
 		}
 	}
 
-	if (nextName !== existingUser.name) {
-		const userWithName = await findUserByName(nextName);
+	if (nextUser !== existingUser.user) {
+		const userWithName = await findUserByUser(nextUser);
 		if (userWithName && userWithName.id !== userId) {
 			throw new UserServiceError('Username already registered', 409);
 		}
 	}
 
-	const updatedUser = await updateUserProfile(userId, nextName, nextEmail);
+	const updatedUser = await updateUserProfile(userId, nextUser, nextEmail);
 	return mapUserRow(updatedUser);
 }
 

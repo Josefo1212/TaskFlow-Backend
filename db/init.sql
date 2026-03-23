@@ -6,9 +6,9 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- =====================================================
 CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    email VARCHAR(255) UNIQUE NOT NULL,
+    email VARCHAR(250) UNIQUE NOT NULL,
     password TEXT NOT NULL,
-    name VARCHAR(255) UNIQUE NOT NULL,
+    user VARCHAR(250) UNIQUE NOT NULL,
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
@@ -19,7 +19,7 @@ CREATE TABLE users (
 CREATE TABLE projects (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     owner_id UUID REFERENCES users(id) ON DELETE SET NULL,
-    name VARCHAR(255) NOT NULL,
+    name TEXT NOT NULL,
     description TEXT,
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
@@ -49,7 +49,7 @@ CREATE INDEX idx_project_members_user_id ON project_members(user_id);
 CREATE TABLE tags (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     owner_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    name VARCHAR(255) NOT NULL,
+    name TEXT NOT NULL,
     color VARCHAR(20) NOT NULL DEFAULT '#808080',
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(owner_id, name)
@@ -65,7 +65,7 @@ CREATE TABLE tasks (
     project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
     creator_id UUID REFERENCES users(id) ON DELETE SET NULL,
     assignee_id UUID REFERENCES users(id) ON DELETE SET NULL,
-    title VARCHAR(255) NOT NULL,
+    title TEXT NOT NULL,
     description TEXT,
     status VARCHAR(50) NOT NULL DEFAULT 'pendiente'
         CHECK (status IN ('pendiente', 'en_progreso', 'completada', 'bloqueada')),

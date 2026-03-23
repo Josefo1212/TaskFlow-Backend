@@ -1,10 +1,10 @@
 export interface RegisterInput {
-    name: string;
+    user: string;
     email: string;
     password: string;
 }
 export interface LoginInput {
-    name: string;
+    user: string;
     password: string;
 }
 export interface LogoutInput {
@@ -14,7 +14,7 @@ export interface RefreshInput {
     refreshToken: string;
 }
 export interface ForgotPasswordInput {
-    name: string;
+    user: string;
 }
 export interface ForgotPasswordResult {
     token: string;
@@ -30,7 +30,7 @@ export interface AuthResult {
     user: {
         id: string;
         email: string;
-        name: string;
+        user: string;
     };
     accessToken: string;
     refreshToken: string;

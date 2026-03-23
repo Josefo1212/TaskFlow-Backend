@@ -11,11 +11,11 @@ const zod_1 = require("zod");
 const user_service_1 = require("../services/user.service");
 const updateProfileSchema = zod_1.z
     .object({
-    name: zod_1.z.string().min(1, 'name cannot be empty').optional(),
-    email: zod_1.z.email('email must be valid').optional(),
+    user: zod_1.z.string().min(1, 'user cannot be empty').max(250, 'user must be at most 250 characters').optional(),
+    email: zod_1.z.email('email must be valid').max(250, 'email must be at most 250 characters').optional(),
 })
-    .refine((data) => data.name !== undefined || data.email !== undefined, {
-    message: 'name or email is required',
+    .refine((data) => data.user !== undefined || data.email !== undefined, {
+    message: 'user or email is required',
 });
 const listUsersSchema = zod_1.z.object({
     page: zod_1.z.coerce.number().int().positive().optional(),
@@ -50,8 +50,8 @@ async function updateMyProfileController(req, res) {
     const requestPayload = {
         user_id: requireAuthenticatedUserId(req),
     };
-    if (payload.name !== undefined) {
-        requestPayload.name = payload.name;
+    if (payload.user !== undefined) {
+        requestPayload.user = payload.user;
     }
     if (payload.email !== undefined) {
         requestPayload.email = payload.email;

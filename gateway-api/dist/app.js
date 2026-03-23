@@ -40,7 +40,8 @@ function createApp() {
         },
     };
     app.use((0, cors_1.default)(corsOptions));
-    app.options('*', (0, cors_1.default)(corsOptions));
+    // Express 5 + path-to-regexp v8 no acepta '*' como ruta. Regex evita ese parse.
+    app.options(/.*/, (0, cors_1.default)(corsOptions));
     app.use((0, morgan_1.default)('dev'));
     app.use(express_1.default.json());
     app.use((0, cookie_parser_1.default)());

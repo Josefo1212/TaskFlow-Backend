@@ -4,10 +4,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.findUserByEmail = findUserByEmail;
-exports.findUserByName = findUserByName;
+exports.findUserByUser = findUserByUser;
 exports.createUser = createUser;
 exports.updateUserPasswordByEmail = updateUserPasswordByEmail;
-exports.updateUserPasswordByName = updateUserPasswordByName;
+exports.updateUserPasswordByUser = updateUserPasswordByUser;
 const database_1 = __importDefault(require("../config/database"));
 const queries_json_1 = __importDefault(require("./queries.json"));
 const queries = queries_json_1.default;
@@ -22,22 +22,22 @@ async function findUserByEmail(email) {
     const { rows } = await database_1.default.query(getQuery('auth.getUserByEmail'), [email]);
     return rows[0] ?? null;
 }
-async function findUserByName(name) {
-    const { rows } = await database_1.default.query(getQuery('auth.getUserByName'), [name]);
+async function findUserByUser(user) {
+    const { rows } = await database_1.default.query(getQuery('auth.getUserByUser'), [user]);
     return rows[0] ?? null;
 }
 async function createUser(params) {
-    const { name, email, passwordHash } = params;
+    const { user, email, passwordHash } = params;
     const { rows } = await database_1.default.query(getQuery('auth.createUser'), [
-        name,
+        user,
         email,
         passwordHash,
     ]);
-    const user = rows[0];
-    if (!user) {
+    const createdUser = rows[0];
+    if (!createdUser) {
         throw new Error('Failed to create user');
     }
-    return user;
+    return createdUser;
 }
 async function updateUserPasswordByEmail(email, passwordHash) {
     const { rows } = await database_1.default.query(getQuery('auth.updateUserPasswordByEmail'), [
@@ -46,10 +46,10 @@ async function updateUserPasswordByEmail(email, passwordHash) {
     ]);
     return rows[0] ?? null;
 }
-async function updateUserPasswordByName(name, passwordHash) {
-    const { rows } = await database_1.default.query(getQuery('auth.updateUserPasswordByName'), [
+async function updateUserPasswordByUser(user, passwordHash) {
+    const { rows } = await database_1.default.query(getQuery('auth.updateUserPasswordByUser'), [
         passwordHash,
-        name,
+        user,
     ]);
     return rows[0] ?? null;
 }

@@ -20,7 +20,7 @@ async function getRefreshTokenUser(refreshToken) {
         return null;
     }
     const parsed = JSON.parse(payload);
-    if (!parsed.id || !parsed.email || !parsed.name) {
+    if (!parsed.id || !parsed.email || !parsed.user) {
         return null;
     }
     return parsed;

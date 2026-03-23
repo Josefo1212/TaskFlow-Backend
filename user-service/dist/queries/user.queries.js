@@ -5,7 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.findUserById = findUserById;
 exports.findUserByEmail = findUserByEmail;
-exports.findUserByName = findUserByName;
+exports.findUserByUser = findUserByUser;
 exports.updateUserProfile = updateUserProfile;
 exports.listUsersQuery = listUsersQuery;
 exports.countUsersQuery = countUsersQuery;
@@ -29,17 +29,17 @@ async function findUserByEmail(email) {
     const { rows } = await database_1.default.query(getQuery('user.getByEmail'), [email]);
     return rows[0] ?? null;
 }
-async function findUserByName(name) {
-    const { rows } = await database_1.default.query(getQuery('user.getByName'), [name]);
+async function findUserByUser(user) {
+    const { rows } = await database_1.default.query(getQuery('user.getByUser'), [user]);
     return rows[0] ?? null;
 }
-async function updateUserProfile(userId, name, email) {
-    const { rows } = await database_1.default.query(getQuery('user.updateProfile'), [userId, name, email]);
-    const user = rows[0];
-    if (!user) {
+async function updateUserProfile(userId, user, email) {
+    const { rows } = await database_1.default.query(getQuery('user.updateProfile'), [userId, user, email]);
+    const updatedUser = rows[0];
+    if (!updatedUser) {
         throw new Error('Failed to update user profile');
     }
-    return user;
+    return updatedUser;
 }
 async function listUsersQuery(search, limit, offset) {
     const searchPattern = `%${search}%`;

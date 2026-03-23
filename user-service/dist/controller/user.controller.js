@@ -66,7 +66,7 @@ function toGrpcServiceError(error) {
 function mapUser(user) {
     return {
         id: user.id,
-        name: user.name,
+        user: user.user,
         email: user.email,
         created_at: user.createdAt,
         updated_at: user.updatedAt,
@@ -75,7 +75,7 @@ function mapUser(user) {
 function mapBasicUser(user) {
     return {
         id: user.id,
-        name: user.name,
+        user: user.user,
         email: user.email,
     };
 }
@@ -95,8 +95,8 @@ exports.userController = {
             const payload = {
                 userId: call.request.user_id ?? '',
             };
-            if (call.request.name?.trim()) {
-                payload.name = call.request.name;
+            if (call.request.user?.trim()) {
+                payload.user = call.request.user;
             }
             if (call.request.email?.trim()) {
                 payload.email = call.request.email;

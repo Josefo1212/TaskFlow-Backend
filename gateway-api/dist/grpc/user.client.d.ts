@@ -1,14 +1,14 @@
 import * as grpc from '@grpc/grpc-js';
 export interface UserGrpcResponse {
     id: string;
-    name: string;
+    user: string;
     email: string;
     created_at: string;
     updated_at: string;
 }
 export interface UserBasicGrpcResponse {
     id: string;
-    name: string;
+    user: string;
     email: string;
 }
 export interface GetProfileGrpcRequest {
@@ -19,7 +19,7 @@ export interface GetProfileGrpcResponse {
 }
 export interface UpdateProfileGrpcRequest {
     user_id: string;
-    name?: string;
+    user?: string;
     email?: string;
 }
 export interface UpdateProfileGrpcResponse {

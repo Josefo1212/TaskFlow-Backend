@@ -12,7 +12,7 @@ import { AuthServiceError } from '../utils/auth-errors';
 
 // --- Tipos gRPC ---
 export interface RegisterGrpcRequest {
-	name: string;
+	user: string;
 	email: string;
 	password: string;
 }
@@ -20,28 +20,28 @@ export interface RegisterGrpcRequest {
 export interface RegisterGrpcResponse {
 	user_id: string;
 	email: string;
-	name: string;
+	user: string;
 	access_token: string;
 	refresh_token: string;
 	refresh_expires_at: string;
 }
 
 export interface LoginGrpcRequest {
-	name: string;
+	user: string;
 	password: string;
 }
 
 export interface LoginGrpcResponse {
 	user_id: string;
 	email: string;
-	name: string;
+	user: string;
 	access_token: string;
 	refresh_token: string;
 	refresh_expires_at: string;
 }
 
 export interface ForgotPasswordGrpcRequest {
-	name: string;
+	user: string;
 }
 
 export interface ForgotPasswordGrpcResponse {
@@ -72,6 +72,15 @@ export interface LogoutGrpcRequest {
 export interface LogoutGrpcResponse {
 	message: string;
 }
+
+type AuthGrpcResponse = {
+	user_id: string;
+	email: string;
+	user: string;
+	access_token: string;
+	refresh_token: string;
+	refresh_expires_at: string;
+};
 
 // --- Mapeadores gRPC ---
 function mapHttpErrorToGrpcCode(statusCode: number): grpc.status {
@@ -122,11 +131,11 @@ export function extractMetadataValue(metadata: grpc.Metadata, key: string): stri
 }
 
 
-export function mapAuthResultToGrpcResponse(data: LoginResult): LoginGrpcResponse {
+export function mapAuthResultToGrpcResponse(data: LoginResult): AuthGrpcResponse {
 	return {
 		user_id: data.user.id,
 		email: data.user.email,
-		name: data.user.name,
+		user: data.user.user,
 		access_token: data.accessToken,
 		refresh_token: data.refreshToken,
 		refresh_expires_at: data.refreshExpiresAt.toISOString(),
@@ -140,11 +149,11 @@ export const authController: grpc.UntypedServiceImplementation = {
 	) => {
 		try {
 			const data = await register({
-				name: call.request.name ?? '',
+				user: call.request.user ?? '',
 				email: call.request.email ?? '',
 				password: call.request.password ?? '',
 			});
-			console.log(`[Register] Usuario registrado: ${data.user.name}`);
+			console.log(`[Register] Usuario registrado: ${data.user.user}`);
 			callback(null, mapAuthResultToGrpcResponse(data));
 		} catch (error) {
 			console.error('[Register] Internal error:', error);
@@ -158,10 +167,10 @@ export const authController: grpc.UntypedServiceImplementation = {
 	) => {
 		try {
 			const data = await login({
-				name: call.request.name ?? '',
+				user: call.request.user ?? '',
 				password: call.request.password ?? '',
 			});
-			console.log(`[Login] Usuario autenticado: ${data.user.name}`);
+			console.log(`[Login] Usuario autenticado: ${data.user.user}`);
 			callback(null, mapAuthResultToGrpcResponse(data));
 		} catch (error) {
 			console.error('[Login] Internal error:', error);
@@ -175,7 +184,7 @@ export const authController: grpc.UntypedServiceImplementation = {
 	) => {
 		try {
 			const data = await forgotPassword({
-				name: call.request.name ?? '',
+				user: call.request.user ?? '',
 			});
 			console.log('[ForgotPassword] Token generado');
 			callback(null, { token: data.token });

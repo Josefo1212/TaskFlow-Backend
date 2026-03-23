@@ -8,7 +8,7 @@ export interface AuthRuntimeConfig {
 export interface AccessTokenPayload {
     sub: string;
     email: string;
-    name: string;
+    user: string;
 }
 export declare function getAuthRuntimeConfig(): AuthRuntimeConfig;
 export declare function generateAccessToken(payload: AccessTokenPayload, jwtSecret: string, expiresIn: JwtExpiresIn): string;

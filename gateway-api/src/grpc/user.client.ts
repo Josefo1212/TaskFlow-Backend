@@ -5,7 +5,7 @@ import { env } from '../config/env';
 
 export interface UserGrpcResponse {
 	id: string;
-	name: string;
+	user: string;
 	email: string;
 	created_at: string;
 	updated_at: string;
@@ -13,7 +13,7 @@ export interface UserGrpcResponse {
 
 export interface UserBasicGrpcResponse {
 	id: string;
-	name: string;
+	user: string;
 	email: string;
 }
 
@@ -27,7 +27,7 @@ export interface GetProfileGrpcResponse {
 
 export interface UpdateProfileGrpcRequest {
 	user_id: string;
-	name?: string;
+	user?: string;
 	email?: string;
 }
 
