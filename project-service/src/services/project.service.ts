@@ -16,6 +16,7 @@ import {
 	updateProjectRow,
 } from '../queries/project.queries';
 import { ProjectServiceError } from '../utils/project-errors';
+import { z } from 'zod';
 
 export interface Project {
 	id: string;
@@ -35,6 +36,15 @@ export interface ProjectMember {
 }
 
 const ALLOWED_ROLES: readonly ProjectMemberRole[] = ['admin', 'member', 'viewer'];
+const projectNameSchema = z
+	.string()
+	.trim()
+	.min(1, 'name is required')
+	.max(200, 'name must be at most 200 characters');
+const projectDescriptionSchema = z
+	.string()
+	.trim()
+	.max(600, 'description must be at most 600 characters');
 
 function formatTimestamp(value: string | Date): string {
 	const date = value instanceof Date ? value : new Date(value);
@@ -79,21 +89,22 @@ function normalizeRequiredId(value: string, field: string): string {
 }
 
 function normalizeRequiredName(value: string): string {
-	const normalized = value.trim();
-	if (!normalized) {
-		throw new ProjectServiceError('name is required', 400);
+	const result = projectNameSchema.safeParse(value);
+	if (!result.success) {
+		throw new ProjectServiceError(result.error.issues[0]?.message ?? 'Invalid name', 400);
 	}
-	if (normalized.length > 255) {
-		throw new ProjectServiceError('name is too long', 400);
-	}
-	return normalized;
+	return result.data;
 }
 
 function normalizeOptionalText(value?: string): string | undefined {
 	if (value === undefined) {
 		return undefined;
 	}
-	const trimmed = value.trim();
+	const result = projectDescriptionSchema.safeParse(value);
+	if (!result.success) {
+		throw new ProjectServiceError(result.error.issues[0]?.message ?? 'Invalid description', 400);
+	}
+	const trimmed = result.data;
 	return trimmed ? trimmed : undefined;
 }
 

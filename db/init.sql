@@ -6,9 +6,11 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- =====================================================
 CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    email VARCHAR(250) UNIQUE NOT NULL,
+    email VARCHAR(250) UNIQUE NOT NULL
+        CHECK (char_length(email) <= 250),
     password TEXT NOT NULL,
-    user VARCHAR(250) UNIQUE NOT NULL,
+    user VARCHAR(250) UNIQUE NOT NULL
+        CHECK (char_length(user) <= 250),
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
@@ -19,8 +21,10 @@ CREATE TABLE users (
 CREATE TABLE projects (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     owner_id UUID REFERENCES users(id) ON DELETE SET NULL,
-    name TEXT NOT NULL,
-    description TEXT,
+    name TEXT NOT NULL
+        CHECK (char_length(btrim(name)) > 0 AND char_length(name) <= 200),
+    description TEXT
+        CHECK (description IS NULL OR char_length(description) <= 600),
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
@@ -49,7 +53,8 @@ CREATE INDEX idx_project_members_user_id ON project_members(user_id);
 CREATE TABLE tags (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     owner_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    name TEXT NOT NULL,
+    name TEXT NOT NULL
+        CHECK (char_length(btrim(name)) > 0 AND char_length(name) <= 200),
     color VARCHAR(20) NOT NULL DEFAULT '#808080',
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(owner_id, name)
@@ -65,8 +70,10 @@ CREATE TABLE tasks (
     project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
     creator_id UUID REFERENCES users(id) ON DELETE SET NULL,
     assignee_id UUID REFERENCES users(id) ON DELETE SET NULL,
-    title TEXT NOT NULL,
-    description TEXT,
+    title TEXT NOT NULL
+        CHECK (char_length(btrim(title)) > 0 AND char_length(title) <= 200),
+    description TEXT
+        CHECK (description IS NULL OR char_length(description) <= 600),
     status VARCHAR(50) NOT NULL DEFAULT 'pendiente'
         CHECK (status IN ('pendiente', 'en_progreso', 'completada', 'bloqueada')),
     priority VARCHAR(20) NOT NULL DEFAULT 'media'

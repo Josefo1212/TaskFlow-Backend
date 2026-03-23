@@ -20,14 +20,14 @@ const registerSchema = zod_1.z.object({
         .max(15, 'password must be at most 15 characters'),
 });
 const loginSchema = zod_1.z.object({
-    user: zod_1.z.string().min(1, 'user is required'),
+    user: zod_1.z.string().trim().min(1, 'user is required').max(250, 'user must be at most 250 characters'),
     password: zod_1.z.string().min(1, 'password is required'),
 });
 const refreshSchema = zod_1.z.object({
     refresh_token: zod_1.z.string().min(1, 'refresh_token is required').optional(),
 });
 const forgotPasswordSchema = zod_1.z.object({
-    user: zod_1.z.string().min(1, 'user is required'),
+    user: zod_1.z.string().trim().min(1, 'user is required').max(250, 'user must be at most 250 characters'),
 });
 const resetPasswordSchema = zod_1.z.object({
     token: zod_1.z.string().min(1, 'token is required'),

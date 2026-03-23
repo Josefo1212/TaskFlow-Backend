@@ -11,7 +11,17 @@ exports.updateProjectMemberRole = updateProjectMemberRole;
 exports.removeProjectMember = removeProjectMember;
 const project_queries_1 = require("../queries/project.queries");
 const project_errors_1 = require("../utils/project-errors");
+const zod_1 = require("zod");
 const ALLOWED_ROLES = ['admin', 'member', 'viewer'];
+const projectNameSchema = zod_1.z
+    .string()
+    .trim()
+    .min(1, 'name is required')
+    .max(200, 'name must be at most 200 characters');
+const projectDescriptionSchema = zod_1.z
+    .string()
+    .trim()
+    .max(600, 'description must be at most 600 characters');
 function formatTimestamp(value) {
     const date = value instanceof Date ? value : new Date(value);
     return date.toISOString();
@@ -48,20 +58,21 @@ function normalizeRequiredId(value, field) {
     return normalized;
 }
 function normalizeRequiredName(value) {
-    const normalized = value.trim();
-    if (!normalized) {
-        throw new project_errors_1.ProjectServiceError('name is required', 400);
+    const result = projectNameSchema.safeParse(value);
+    if (!result.success) {
+        throw new project_errors_1.ProjectServiceError(result.error.issues[0]?.message ?? 'Invalid name', 400);
     }
-    if (normalized.length > 255) {
-        throw new project_errors_1.ProjectServiceError('name is too long', 400);
-    }
-    return normalized;
+    return result.data;
 }
 function normalizeOptionalText(value) {
     if (value === undefined) {
         return undefined;
     }
-    const trimmed = value.trim();
+    const result = projectDescriptionSchema.safeParse(value);
+    if (!result.success) {
+        throw new project_errors_1.ProjectServiceError(result.error.issues[0]?.message ?? 'Invalid description', 400);
+    }
+    const trimmed = result.data;
     return trimmed ? trimmed : undefined;
 }
 function normalizeRole(value) {

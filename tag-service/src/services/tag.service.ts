@@ -10,6 +10,7 @@ import {
 	updateTagForOwnerRow,
 } from '../queries/tag.queries';
 import { TagServiceError } from '../utils/tag-errors';
+import { z } from 'zod';
 
 export interface Tag {
 	id: string;
@@ -18,6 +19,8 @@ export interface Tag {
 	color: string;
 	createdAt: string;
 }
+
+const tagNameSchema = z.string().trim().min(1, 'name is required').max(200, 'name must be at most 200 characters');
 
 function formatTimestamp(value: string | Date): string {
 	const date = value instanceof Date ? value : new Date(value);
@@ -43,26 +46,24 @@ function normalizeRequiredId(value: string, field: string): string {
 }
 
 function normalizeRequiredName(value: string): string {
-	const normalized = value.trim();
-	if (!normalized) {
-		throw new TagServiceError('name is required', 400);
+	const result = tagNameSchema.safeParse(value);
+	if (!result.success) {
+		throw new TagServiceError(result.error.issues[0]?.message ?? 'Invalid name', 400);
 	}
-	if (normalized.length > 255) {
-		throw new TagServiceError('name is too long', 400);
-	}
-	return normalized;
+	return result.data;
 }
 
 function normalizeOptionalName(value?: string): string | undefined {
 	if (value === undefined) {
 		return undefined;
 	}
-	const trimmed = value.trim();
+	const result = tagNameSchema.safeParse(value);
+	if (!result.success) {
+		throw new TagServiceError(result.error.issues[0]?.message ?? 'Invalid name', 400);
+	}
+	const trimmed = result.data;
 	if (!trimmed) {
 		return undefined;
-	}
-	if (trimmed.length > 255) {
-		throw new TagServiceError('name is too long', 400);
 	}
 	return trimmed;
 }

@@ -28,8 +28,8 @@ function requireUserIdParam(req: Request): string {
 }
 
 const createProjectSchema = z.object({
-	name: z.string().min(1, 'name is required'),
-	description: z.string().optional(),
+	name: z.string().trim().min(1, 'name is required').max(200, 'name must be at most 200 characters'),
+	description: z.string().trim().max(600, 'description must be at most 600 characters').optional(),
 });
 
 const listProjectsSchema = z.object({
@@ -39,8 +39,8 @@ const listProjectsSchema = z.object({
 
 const updateProjectSchema = z
 	.object({
-		name: z.string().min(1).optional(),
-		description: z.string().optional(),
+		name: z.string().trim().min(1).max(200, 'name must be at most 200 characters').optional(),
+		description: z.string().trim().max(600, 'description must be at most 600 characters').optional(),
 	})
 	.refine((data) => data.name !== undefined || data.description !== undefined, {
 		message: 'name or description is required',

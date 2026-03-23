@@ -37,7 +37,7 @@ services:
 
   auth-service:
     container_name: auth-service
-    image: josefo1212/auth-service:3.4.0
+    image: josefo1212/auth-service:3.5.0
     restart: unless-stopped
     depends_on:
       - db
@@ -52,7 +52,7 @@ services:
 
   gateway-api:
     container_name: gateway-api
-    image: josefo1212/gateway-api:2.7.0
+    image: josefo1212/gateway-api:2.8.0
     restart: unless-stopped
     depends_on:
       - auth-service
@@ -72,7 +72,7 @@ services:
 
   tag-service:
     container_name: tag-service
-    image: josefo1212/tag-service:1.1.0
+    image: josefo1212/tag-service:1.2.0
     restart: unless-stopped
     depends_on:
       - db
@@ -86,7 +86,7 @@ services:
 
   task-service:
     container_name: task-service
-    image: josefo1212/task-service:1.2.0
+    image: josefo1212/task-service:1.3.0
     restart: unless-stopped
     depends_on:
       - db
@@ -100,7 +100,7 @@ services:
 
   project-service:
     container_name: project-service
-    image: josefo1212/project-service:1.1.0
+    image: josefo1212/project-service:1.2.0
     restart: unless-stopped
     depends_on:
       - db

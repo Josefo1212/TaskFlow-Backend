@@ -13,13 +13,13 @@ import {
 } from '../services/tag.service';
 
 const createTagSchema = z.object({
-	name: z.string().min(1, 'name is required'),
+	name: z.string().trim().min(1, 'name is required').max(200, 'name must be at most 200 characters'),
 	color: z.string().min(1).optional(),
 });
 
 const updateTagSchema = z
 	.object({
-		name: z.string().min(1).optional(),
+		name: z.string().trim().min(1).max(200, 'name must be at most 200 characters').optional(),
 		color: z.string().min(1).optional(),
 	})
 	.refine((data) => data.name !== undefined || data.color !== undefined, {

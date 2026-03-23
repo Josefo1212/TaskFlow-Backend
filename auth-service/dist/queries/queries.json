@@ -1,7 +1,7 @@
 {
-    "auth.createUser": "INSERT INTO users (\"user\", email, password) VALUES ($1, $2, $3) RETURNING id, email, \"user\";",
-    "auth.getUserByEmail": "SELECT id, email, password, \"user\" FROM users WHERE email = $1 LIMIT 1;",
-    "auth.getUserByUser": "SELECT id, email, password, \"user\" FROM users WHERE LOWER(\"user\") = LOWER($1) LIMIT 1;",
-    "auth.updateUserPasswordByEmail": "UPDATE users SET password = $1 WHERE email = $2 RETURNING id, email, \"user\";",
-    "auth.updateUserPasswordByUser": "UPDATE users SET password = $1 WHERE LOWER(\"user\") = LOWER($2) RETURNING id, email, \"user\";"
+    "auth.createUser": "INSERT INTO users (user, email, password) VALUES ($1, $2, $3) RETURNING id, email, user;",
+    "auth.getUserByEmail": "SELECT id, email, password, user FROM users WHERE email = $1 LIMIT 1;",
+    "auth.getUserByUser": "SELECT id, email, password, user FROM users WHERE LOWER(user) = LOWER($1) LIMIT 1;",
+    "auth.updateUserPasswordByEmail": "UPDATE users SET password = $1 WHERE email = $2 RETURNING id, email, user;",
+    "auth.updateUserPasswordByUser": "UPDATE users SET password = $1 WHERE LOWER(user) = LOWER($2) RETURNING id, email, user;"
 }

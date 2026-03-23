@@ -14,6 +14,7 @@ import {
 	ListTasksFilters,
 } from '../queries/task.queries';
 import { TaskServiceError } from '../utils/task-errors';
+import { z } from 'zod';
 
 export interface Task {
 	id: string;
@@ -31,6 +32,15 @@ export interface Task {
 
 const ALLOWED_STATUS: readonly TaskStatus[] = ['pendiente', 'en_progreso', 'completada', 'bloqueada'];
 const ALLOWED_PRIORITY: readonly TaskPriority[] = ['baja', 'media', 'alta', 'critica'];
+const taskTitleSchema = z
+	.string()
+	.trim()
+	.min(1, 'title is required')
+	.max(200, 'title must be at most 200 characters');
+const taskDescriptionSchema = z
+	.string()
+	.trim()
+	.max(600, 'description must be at most 600 characters');
 
 function normalizeToken(value: string): string {
 	return value
@@ -96,21 +106,22 @@ function normalizeOptionalId(value?: string): string | undefined {
 }
 
 function normalizeRequiredTitle(value: string): string {
-	const normalized = value.trim();
-	if (!normalized) {
-		throw new TaskServiceError('title is required', 400);
+	const result = taskTitleSchema.safeParse(value);
+	if (!result.success) {
+		throw new TaskServiceError(result.error.issues[0]?.message ?? 'Invalid title', 400);
 	}
-	if (normalized.length > 255) {
-		throw new TaskServiceError('title is too long', 400);
-	}
-	return normalized;
+	return result.data;
 }
 
 function normalizeOptionalText(value?: string): string | undefined {
 	if (value === undefined) {
 		return undefined;
 	}
-	const trimmed = value.trim();
+	const result = taskDescriptionSchema.safeParse(value);
+	if (!result.success) {
+		throw new TaskServiceError(result.error.issues[0]?.message ?? 'Invalid description', 400);
+	}
+	const trimmed = result.data;
 	if (!trimmed) {
 		return undefined;
 	}

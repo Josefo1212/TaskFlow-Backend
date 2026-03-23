@@ -15,8 +15,8 @@ import {
 const createTaskSchema = z.object({
 	project_id: z.string().min(1, 'project_id is required'),
 	assignee_id: z.string().min(1).optional(),
-	title: z.string().min(1, 'title is required'),
-	description: z.string().optional(),
+	title: z.string().trim().min(1, 'title is required').max(200, 'title must be at most 200 characters'),
+	description: z.string().trim().max(600, 'description must be at most 600 characters').optional(),
 	status: z.string().optional(),
 	priority: z.string().optional(),
 	due_date: z.string().optional(),
@@ -24,8 +24,8 @@ const createTaskSchema = z.object({
 
 const updateTaskSchema = z
 	.object({
-		title: z.string().min(1).optional(),
-		description: z.string().optional(),
+		title: z.string().trim().min(1).max(200, 'title must be at most 200 characters').optional(),
+		description: z.string().trim().max(600, 'description must be at most 600 characters').optional(),
 		due_date: z.string().optional(),
 	})
 	.refine((data) => data.title !== undefined || data.description !== undefined || data.due_date !== undefined, {

@@ -23,8 +23,8 @@ function requireUserIdParam(req) {
     return typeof userId === 'string' ? userId : '';
 }
 const createProjectSchema = zod_1.z.object({
-    name: zod_1.z.string().min(1, 'name is required'),
-    description: zod_1.z.string().optional(),
+    name: zod_1.z.string().trim().min(1, 'name is required').max(200, 'name must be at most 200 characters'),
+    description: zod_1.z.string().trim().max(600, 'description must be at most 600 characters').optional(),
 });
 const listProjectsSchema = zod_1.z.object({
     page: zod_1.z.coerce.number().int().positive().optional(),
@@ -32,8 +32,8 @@ const listProjectsSchema = zod_1.z.object({
 });
 const updateProjectSchema = zod_1.z
     .object({
-    name: zod_1.z.string().min(1).optional(),
-    description: zod_1.z.string().optional(),
+    name: zod_1.z.string().trim().min(1).max(200, 'name must be at most 200 characters').optional(),
+    description: zod_1.z.string().trim().max(600, 'description must be at most 600 characters').optional(),
 })
     .refine((data) => data.name !== undefined || data.description !== undefined, {
     message: 'name or description is required',

@@ -10,11 +10,45 @@ exports.forgotPassword = forgotPassword;
 exports.resetPassword = resetPassword;
 exports.logout = logout;
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
+const zod_1 = require("zod");
 const auth_queries_1 = require("../queries/auth.queries");
 const auth_errors_1 = require("../utils/auth-errors");
 const refresh_token_1 = require("../utils/refresh-token");
 const token_1 = require("../utils/token");
 const password_reset_1 = require("../utils/password-reset");
+const registerInputSchema = zod_1.z.object({
+    user: zod_1.z.string().trim().min(1, 'User is required').max(250, 'User must be at most 250 characters'),
+    email: zod_1.z
+        .string()
+        .trim()
+        .email('Email must be valid')
+        .max(250, 'Email must be at most 250 characters'),
+    password: zod_1.z
+        .string()
+        .min(8, 'Password must be between 8 and 15 characters')
+        .max(15, 'Password must be between 8 and 15 characters'),
+});
+const loginInputSchema = zod_1.z.object({
+    user: zod_1.z.string().trim().min(1, 'Username and password are required').max(250, 'User must be at most 250 characters'),
+    password: zod_1.z.string().min(1, 'Username and password are required'),
+});
+const forgotPasswordInputSchema = zod_1.z.object({
+    user: zod_1.z.string().trim().min(1, 'User is required').max(250, 'User must be at most 250 characters'),
+});
+const resetPasswordInputSchema = zod_1.z.object({
+    token: zod_1.z.string().trim().min(1, 'Token is required'),
+    password: zod_1.z
+        .string()
+        .min(8, 'Password must be between 8 and 15 characters')
+        .max(15, 'Password must be between 8 and 15 characters'),
+});
+function parseOrThrow(schema, input) {
+    const result = schema.safeParse(input);
+    if (!result.success) {
+        throw new auth_errors_1.AuthServiceError(result.error.issues[0]?.message ?? 'Invalid input', 400);
+    }
+    return result.data;
+}
 async function issueTokensForUser(user) {
     const config = (0, token_1.getAuthRuntimeConfig)();
     const accessToken = (0, token_1.generateAccessToken)({
@@ -37,21 +71,10 @@ async function issueTokensForUser(user) {
     };
 }
 async function register(input) {
-    const username = input.user?.trim();
-    const email = input.email?.trim().toLowerCase();
-    const password = input.password;
-    if (!username || !email || !password) {
-        throw new auth_errors_1.AuthServiceError('User, email and password are required', 400);
-    }
-    if (username.length > 250) {
-        throw new auth_errors_1.AuthServiceError('User must be at most 250 characters', 400);
-    }
-    if (email.length > 250) {
-        throw new auth_errors_1.AuthServiceError('Email must be at most 250 characters', 400);
-    }
-    if (password.length < 8 || password.length > 15) {
-        throw new auth_errors_1.AuthServiceError('Password must be between 8 and 15 characters', 400);
-    }
+    const parsed = parseOrThrow(registerInputSchema, input);
+    const username = parsed.user;
+    const email = parsed.email.toLowerCase();
+    const password = parsed.password;
     const existingUser = await (0, auth_queries_1.findUserByEmail)(email);
     if (existingUser) {
         throw new auth_errors_1.AuthServiceError('Email already registered', 409);
@@ -69,11 +92,9 @@ async function register(input) {
     return issueTokensForUser(createdUser);
 }
 async function login(input) {
-    const user = input.user?.trim();
-    const password = input.password;
-    if (!user || !password) {
-        throw new auth_errors_1.AuthServiceError('Username and password are required', 400);
-    }
+    const parsed = parseOrThrow(loginInputSchema, input);
+    const user = parsed.user;
+    const password = parsed.password;
     const found = await (0, auth_queries_1.findUserByUser)(user);
     if (!found) {
         throw new auth_errors_1.AuthServiceError('Invalid credentials', 401);
@@ -106,10 +127,8 @@ async function refresh(input) {
     return { accessToken };
 }
 async function forgotPassword(input) {
-    const user = input.user?.trim();
-    if (!user) {
-        throw new auth_errors_1.AuthServiceError('User is required', 400);
-    }
+    const parsed = parseOrThrow(forgotPasswordInputSchema, input);
+    const user = parsed.user;
     const ttlMinutes = Number(process.env.PASSWORD_RESET_TTL_MINUTES ?? 15);
     const token = (0, password_reset_1.generatePasswordResetToken)();
     // Guardamos el nombre; si el usuario no existe, guardamos un marcador para no filtrar info.
@@ -118,17 +137,9 @@ async function forgotPassword(input) {
     return { token };
 }
 async function resetPassword(input) {
-    const token = input.token?.trim();
-    const password = input.password;
-    if (!token) {
-        throw new auth_errors_1.AuthServiceError('Token is required', 400);
-    }
-    if (!password) {
-        throw new auth_errors_1.AuthServiceError('Password is required', 400);
-    }
-    if (password.length < 8 || password.length > 15) {
-        throw new auth_errors_1.AuthServiceError('Password must be between 8 and 15 characters', 400);
-    }
+    const parsed = parseOrThrow(resetPasswordInputSchema, input);
+    const token = parsed.token;
+    const password = parsed.password;
     const user = await (0, password_reset_1.getPasswordResetUser)(token);
     if (!user || user === '__invalid__') {
         throw new auth_errors_1.AuthServiceError('Token is invalid or expired', 400);

@@ -26,7 +26,7 @@ const registerSchema = z.object({
 });
 
 const loginSchema = z.object({
-	user: z.string().min(1, 'user is required'),
+	user: z.string().trim().min(1, 'user is required').max(250, 'user must be at most 250 characters'),
 	password: z.string().min(1, 'password is required'),
 });
 
@@ -35,7 +35,7 @@ const refreshSchema = z.object({
 });
 
 const forgotPasswordSchema = z.object({
-	user: z.string().min(1, 'user is required'),
+	user: z.string().trim().min(1, 'user is required').max(250, 'user must be at most 250 characters'),
 });
 
 const resetPasswordSchema = z.object({

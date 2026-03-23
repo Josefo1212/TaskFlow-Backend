@@ -13,16 +13,16 @@ const task_service_1 = require("../services/task.service");
 const createTaskSchema = zod_1.z.object({
     project_id: zod_1.z.string().min(1, 'project_id is required'),
     assignee_id: zod_1.z.string().min(1).optional(),
-    title: zod_1.z.string().min(1, 'title is required'),
-    description: zod_1.z.string().optional(),
+    title: zod_1.z.string().trim().min(1, 'title is required').max(200, 'title must be at most 200 characters'),
+    description: zod_1.z.string().trim().max(600, 'description must be at most 600 characters').optional(),
     status: zod_1.z.string().optional(),
     priority: zod_1.z.string().optional(),
     due_date: zod_1.z.string().optional(),
 });
 const updateTaskSchema = zod_1.z
     .object({
-    title: zod_1.z.string().min(1).optional(),
-    description: zod_1.z.string().optional(),
+    title: zod_1.z.string().trim().min(1).max(200, 'title must be at most 200 characters').optional(),
+    description: zod_1.z.string().trim().max(600, 'description must be at most 600 characters').optional(),
     due_date: zod_1.z.string().optional(),
 })
     .refine((data) => data.title !== undefined || data.description !== undefined || data.due_date !== undefined, {
