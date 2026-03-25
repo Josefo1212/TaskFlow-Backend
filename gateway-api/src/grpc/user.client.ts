@@ -7,6 +7,8 @@ export interface UserGrpcResponse {
 	id: string;
 	user: string;
 	email: string;
+	phone: string;
+	bio: string;
 	created_at: string;
 	updated_at: string;
 }
@@ -27,8 +29,8 @@ export interface GetProfileGrpcResponse {
 
 export interface UpdateProfileGrpcRequest {
 	user_id: string;
-	user?: string;
-	email?: string;
+	phone?: string;
+	bio?: string;
 }
 
 export interface UpdateProfileGrpcResponse {

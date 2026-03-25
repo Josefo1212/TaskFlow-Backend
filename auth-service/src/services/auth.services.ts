@@ -3,6 +3,7 @@ import { z } from 'zod';
 import {
 	createUser,
 	findUserByEmail,
+	findUserByPhone,
 	findUserByUser,
 	updateUserPasswordByUser,
 } from '../queries/auth.queries';
@@ -32,6 +33,7 @@ export interface RegisterInput {
 	user: string;
 	email: string;
 	password: string;
+	phone: string;
 }
 
 export interface LoginInput {
@@ -69,6 +71,7 @@ export interface AuthResult {
 		id: string;
 		email: string;
 		user: string;
+		phone: string;
 	};
 	accessToken: string;
 	refreshToken: string;
@@ -97,6 +100,11 @@ const registerInputSchema = z.object({
 		.string()
 		.min(8, 'Password must be between 8 and 15 characters')
 		.max(15, 'Password must be between 8 and 15 characters'),
+	phone: z
+		.string()
+		.trim()
+		.min(7, 'Phone must be between 7 and 20 digits')
+		.max(30, 'Phone must be at most 30 characters'),
 });
 
 const loginInputSchema = z.object({
@@ -145,6 +153,7 @@ async function issueTokensForUser(user: UserIdentity): Promise<AuthResult> {
 			id: user.id,
 			email: user.email,
 			user: user.user,
+			phone: user.phone ?? '',
 		},
 		accessToken,
 		refreshToken,
@@ -152,11 +161,20 @@ async function issueTokensForUser(user: UserIdentity): Promise<AuthResult> {
 	};
 }
 
+function normalizePhone(value: string): string {
+	const compact = value.trim().replace(/[\s().-]+/g, '');
+	if (!/^\+?[0-9]{7,20}$/.test(compact)) {
+		throw new AuthServiceError('Phone must contain 7 to 20 digits and may start with +', 400);
+	}
+	return compact;
+}
+
 export async function register(input: RegisterInput): Promise<RegisterResult> {
 	const parsed = parseOrThrow(registerInputSchema, input);
 	const username = parsed.user;
 	const email = parsed.email.toLowerCase();
 	const password = parsed.password;
+	const phone = normalizePhone(parsed.phone);
 
 	const existingUser = await findUserByEmail(email);
 	if (existingUser) {
@@ -168,10 +186,16 @@ export async function register(input: RegisterInput): Promise<RegisterResult> {
 		throw new AuthServiceError('Username already registered', 409);
 	}
 
+	const existingPhone = await findUserByPhone(phone);
+	if (existingPhone) {
+		throw new AuthServiceError('Phone already registered', 409);
+	}
+
 	const passwordHash = await bcrypt.hash(password, 10);
 	const createdUser = await createUser({
 		user: username,
 		email,
+		phone,
 		passwordHash,
 	});
 
@@ -197,6 +221,7 @@ export async function login(input: LoginInput): Promise<LoginResult> {
 		id: found.id,
 		email: found.email,
 		user: found.user,
+		phone: found.phone,
 	});
 }
 

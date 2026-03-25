@@ -8,17 +8,20 @@ interface UserRecord {
 	email: string;
 	password: string;
 	user: string;
+	phone: string;
 }
 
 interface CreatedUserRecord {
 	id: string;
 	email: string;
 	user: string;
+	phone: string;
 }
 
 interface CreateUserParams {
 	user: string;
 	email: string;
+	phone: string;
 	passwordHash: string;
 }
 
@@ -26,6 +29,7 @@ interface UpdatedUserRecord {
 	id: string;
 	email: string;
 	user: string;
+	phone: string;
 }
 
 const queries: SqlMap = rawQueries;
@@ -48,12 +52,18 @@ export async function findUserByUser(user: string): Promise<UserRecord | null> {
 	return rows[0] ?? null;
 }
 
+export async function findUserByPhone(phone: string): Promise<UserRecord | null> {
+	const { rows } = await pool.query<UserRecord>(getQuery('auth.getUserByPhone'), [phone]);
+	return rows[0] ?? null;
+}
+
 export async function createUser(params: CreateUserParams): Promise<CreatedUserRecord> {
-	const { user, email, passwordHash } = params;
+	const { user, email, phone, passwordHash } = params;
 
 	const { rows } = await pool.query<CreatedUserRecord>(getQuery('auth.createUser'), [
 		user,
 		email,
+		phone,
 		passwordHash,
 	]);
 

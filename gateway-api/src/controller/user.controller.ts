@@ -14,18 +14,20 @@ import {
 
 const updateProfileSchema = z
 	.object({
-		user: z
+		phone: z
 			.string()
-			.min(1, 'El campo "user" no puede estar vacío.')
-			.max(250, 'El campo "user" debe tener como máximo 250 caracteres.')
+			.trim()
+			.min(7, 'El campo "phone" debe tener al menos 7 dígitos.')
+			.max(30, 'El campo "phone" debe tener como máximo 30 caracteres.')
 			.optional(),
-		email: z
-			.email('El campo "email" debe ser un correo válido.')
-			.max(250, 'El campo "email" debe tener como máximo 250 caracteres.')
+		bio: z
+			.string()
+			.max(1000, 'El campo "bio" debe tener como máximo 1000 caracteres.')
+			.nullable()
 			.optional(),
 	})
-	.refine((data) => data.user !== undefined || data.email !== undefined, {
-		message: 'Debes enviar al menos "user" o "email".',
+	.refine((data) => data.phone !== undefined || data.bio !== undefined, {
+		message: 'Debes enviar al menos "phone" o "bio".',
 	});
 
 const listUsersSchema = z.object({
@@ -72,18 +74,18 @@ export async function updateMyProfileController(req: AuthenticatedRequest, res: 
 	const payload = updateProfileSchema.parse(req.body ?? {});
 	const requestPayload: {
 		user_id: string;
-		user?: string;
-		email?: string;
+		phone?: string;
+		bio?: string;
 	} = {
 		user_id: requireAuthenticatedUserId(req),
 	};
 
-	if (payload.user !== undefined) {
-		requestPayload.user = payload.user;
+	if (payload.phone !== undefined) {
+		requestPayload.phone = payload.phone;
 	}
 
-	if (payload.email !== undefined) {
-		requestPayload.email = payload.email;
+	if (payload.bio !== undefined) {
+		requestPayload.bio = payload.bio ?? '';
 	}
 
 	const response = await updateProfileWithUserService(requestPayload);

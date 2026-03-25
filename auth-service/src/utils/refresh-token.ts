@@ -4,6 +4,7 @@ export interface UserIdentity {
 	id: string;
 	email: string;
 	user: string;
+	phone?: string;
 }
 
 const REFRESH_TOKEN_PREFIX = 'auth:refresh:';

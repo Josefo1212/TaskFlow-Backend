@@ -7,6 +7,7 @@ export interface RegisterGrpcRequest {
 	user: string;
 	email: string;
 	password: string;
+	phone: string;
 }
 
 export interface AuthUserGrpcResponse {
@@ -16,6 +17,7 @@ export interface AuthUserGrpcResponse {
 	access_token: string;
 	refresh_token: string;
 	refresh_expires_at: string;
+	phone: string;
 }
 
 export interface LoginGrpcRequest {

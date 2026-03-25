@@ -1,10 +1,11 @@
 {
-	"user.getById": "SELECT id, \"user\", email, created_at, updated_at FROM users WHERE id = $1 LIMIT 1;",
-	"user.getByEmail": "SELECT id, \"user\", email, created_at, updated_at FROM users WHERE email = $1 LIMIT 1;",
-	"user.getByUser": "SELECT id, \"user\", email, created_at, updated_at FROM users WHERE \"user\" = $1 LIMIT 1;",
-	"user.updateProfile": "UPDATE users SET \"user\" = $2, email = $3 WHERE id = $1 RETURNING id, \"user\", email, created_at, updated_at;",
-	"user.list": "SELECT id, \"user\", email, created_at, updated_at FROM users WHERE ($1 = '' OR \"user\" ILIKE $2 OR email ILIKE $2) ORDER BY created_at DESC LIMIT $3 OFFSET $4;",
-	"user.count": "SELECT COUNT(*)::int AS total FROM users WHERE ($1 = '' OR \"user\" ILIKE $2 OR email ILIKE $2);",
+	"user.getById": "SELECT id, \"user\", email, phone, bio, created_at, updated_at FROM users WHERE id = $1 LIMIT 1;",
+	"user.getByEmail": "SELECT id, \"user\", email, phone, bio, created_at, updated_at FROM users WHERE email = $1 LIMIT 1;",
+	"user.getByUser": "SELECT id, \"user\", email, phone, bio, created_at, updated_at FROM users WHERE \"user\" = $1 LIMIT 1;",
+	"user.getByPhone": "SELECT id, \"user\", email, phone, bio, created_at, updated_at FROM users WHERE phone = $1 LIMIT 1;",
+	"user.updateProfile": "UPDATE users SET phone = $2, bio = $3 WHERE id = $1 RETURNING id, \"user\", email, phone, bio, created_at, updated_at;",
+	"user.list": "SELECT id, \"user\", email, phone, bio, created_at, updated_at FROM users WHERE ($1 = '' OR \"user\" ILIKE $2 OR email ILIKE $2 OR phone ILIKE $2) ORDER BY created_at DESC LIMIT $3 OFFSET $4;",
+	"user.count": "SELECT COUNT(*)::int AS total FROM users WHERE ($1 = '' OR \"user\" ILIKE $2 OR email ILIKE $2 OR phone ILIKE $2);",
 	"user.search": "SELECT id, \"user\", email FROM users WHERE ($1 = '' OR \"user\" ILIKE $1 OR email ILIKE $1) ORDER BY \"user\" ASC LIMIT $2;",
 	"user.getByIds": "SELECT id, \"user\", email FROM users WHERE id = ANY($1::uuid[]) ORDER BY \"user\" ASC;"
 }

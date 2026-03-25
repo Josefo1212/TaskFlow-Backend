@@ -15,6 +15,7 @@ message RegisterRequest {
 	string user = 1;
 	string email = 2;
 	string password = 3;
+	string phone = 4;
 }
 
 message RegisterResponse {
@@ -24,6 +25,7 @@ message RegisterResponse {
 	string access_token = 4;
 	string refresh_token = 5;
 	string refresh_expires_at = 6;
+	string phone = 7;
 }
 
 message LoginRequest {
@@ -38,6 +40,7 @@ message LoginResponse {
 	string access_token = 4;
 	string refresh_token = 5;
 	string refresh_expires_at = 6;
+	string phone = 7;
 }
 
 message ForgotPasswordRequest {

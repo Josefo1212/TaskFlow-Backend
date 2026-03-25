@@ -8,9 +8,13 @@ CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     email VARCHAR(250) UNIQUE NOT NULL
         CHECK (char_length(email) <= 250),
+    phone VARCHAR(30) UNIQUE NOT NULL
+        CHECK (char_length(btrim(phone)) BETWEEN 7 AND 30),
     password TEXT NOT NULL,
     "user" VARCHAR(250) UNIQUE NOT NULL
         CHECK (char_length("user") <= 250),
+    bio TEXT
+        CHECK (bio IS NULL OR char_length(bio) <= 1000),
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );

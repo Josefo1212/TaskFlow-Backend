@@ -7,6 +7,8 @@ interface UserRow {
 	id: string;
 	user: string;
 	email: string;
+	phone: string;
+	bio: string | null;
 	created_at: string | Date;
 	updated_at: string | Date;
 }
@@ -47,8 +49,13 @@ export async function findUserByUser(user: string): Promise<UserRow | null> {
 	return rows[0] ?? null;
 }
 
-export async function updateUserProfile(userId: string, user: string, email: string): Promise<UserRow> {
-	const { rows } = await pool.query<UserRow>(getQuery('user.updateProfile'), [userId, user, email]);
+export async function findUserByPhone(phone: string): Promise<UserRow | null> {
+	const { rows } = await pool.query<UserRow>(getQuery('user.getByPhone'), [phone]);
+	return rows[0] ?? null;
+}
+
+export async function updateUserProfile(userId: string, phone: string, bio: string | null): Promise<UserRow> {
+	const { rows } = await pool.query<UserRow>(getQuery('user.updateProfile'), [userId, phone, bio]);
 	const updatedUser = rows[0];
 
 	if (!updatedUser) {

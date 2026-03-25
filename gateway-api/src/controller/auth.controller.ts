@@ -28,6 +28,11 @@ const registerSchema = z.object({
 		.string()
 		.min(8, 'El campo "password" debe tener al menos 8 caracteres.')
 		.max(15, 'El campo "password" debe tener como máximo 15 caracteres.'),
+	phone: z
+		.string()
+		.trim()
+		.min(7, 'El campo "phone" debe tener al menos 7 dígitos.')
+		.max(30, 'El campo "phone" debe tener como máximo 30 caracteres.'),
 });
 
 const loginSchema = z.object({
@@ -80,6 +85,7 @@ function buildAuthResponse(response: Awaited<ReturnType<typeof loginWithAuthServ
 		user_id: response.user_id,
 		email: response.email,
 		user: response.user,
+		phone: response.phone,
 		access_token: response.access_token,
 	};
 }

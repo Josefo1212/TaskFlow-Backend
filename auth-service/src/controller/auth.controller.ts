@@ -15,6 +15,7 @@ export interface RegisterGrpcRequest {
 	user: string;
 	email: string;
 	password: string;
+	phone: string;
 }
 
 export interface RegisterGrpcResponse {
@@ -24,6 +25,7 @@ export interface RegisterGrpcResponse {
 	access_token: string;
 	refresh_token: string;
 	refresh_expires_at: string;
+	phone: string;
 }
 
 export interface LoginGrpcRequest {
@@ -38,6 +40,7 @@ export interface LoginGrpcResponse {
 	access_token: string;
 	refresh_token: string;
 	refresh_expires_at: string;
+	phone: string;
 }
 
 export interface ForgotPasswordGrpcRequest {
@@ -80,6 +83,7 @@ type AuthGrpcResponse = {
 	access_token: string;
 	refresh_token: string;
 	refresh_expires_at: string;
+	phone: string;
 };
 
 // --- Mapeadores gRPC ---
@@ -139,6 +143,7 @@ export function mapAuthResultToGrpcResponse(data: LoginResult): AuthGrpcResponse
 		access_token: data.accessToken,
 		refresh_token: data.refreshToken,
 		refresh_expires_at: data.refreshExpiresAt.toISOString(),
+		phone: data.user.phone,
 	};
 }
 
@@ -152,6 +157,7 @@ export const authController: grpc.UntypedServiceImplementation = {
 				user: call.request.user ?? '',
 				email: call.request.email ?? '',
 				password: call.request.password ?? '',
+				phone: call.request.phone ?? '',
 			});
 			console.log(`[Register] Usuario registrado: ${data.user.user}`);
 			callback(null, mapAuthResultToGrpcResponse(data));

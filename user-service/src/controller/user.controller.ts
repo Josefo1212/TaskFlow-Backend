@@ -18,8 +18,8 @@ interface GetProfileGrpcRequest {
 
 interface UpdateProfileGrpcRequest {
 	user_id: string;
-	user?: string;
-	email?: string;
+	phone?: string;
+	bio?: string;
 }
 
 interface ListUsersGrpcRequest {
@@ -49,6 +49,8 @@ interface UserGrpcResponse {
 	id: string;
 	user: string;
 	email: string;
+	phone: string;
+	bio: string;
 	created_at: string;
 	updated_at: string;
 }
@@ -128,6 +130,8 @@ function mapUser(user: UserProfile): UserGrpcResponse {
 		id: user.id,
 		user: user.user,
 		email: user.email,
+		phone: user.phone,
+		bio: user.bio ?? '',
 		created_at: user.createdAt,
 		updated_at: user.updatedAt,
 	};
@@ -162,18 +166,18 @@ export const userController: grpc.UntypedServiceImplementation = {
 		try {
 			const payload: {
 				userId: string;
-				user?: string;
-				email?: string;
+				phone?: string;
+				bio?: string;
 			} = {
 				userId: call.request.user_id ?? '',
 			};
 
-			if (call.request.user?.trim()) {
-				payload.user = call.request.user;
+			if (call.request.phone?.trim()) {
+				payload.phone = call.request.phone;
 			}
 
-			if (call.request.email?.trim()) {
-				payload.email = call.request.email;
+			if (call.request.bio !== undefined) {
+				payload.bio = call.request.bio;
 			}
 
 			const user = await updateProfile(payload);

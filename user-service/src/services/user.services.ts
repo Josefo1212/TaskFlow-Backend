@@ -1,8 +1,7 @@
 import {
 	countUsersQuery,
-	findUserByEmail,
 	findUserById,
-	findUserByUser,
+	findUserByPhone,
 	getUsersByIdsQuery,
 	listUsersQuery,
 	searchUsersQuery,
@@ -16,6 +15,8 @@ export interface UserProfile {
 	id: string;
 	user: string;
 	email: string;
+	phone: string;
+	bio?: string;
 	createdAt: string;
 	updatedAt: string;
 }
@@ -32,8 +33,8 @@ interface GetProfileInput {
 
 interface UpdateProfileInput {
 	userId: string;
-	user?: string;
-	email?: string;
+	phone?: string;
+	bio?: string;
 }
 
 interface ListUsersInput {
@@ -77,13 +78,20 @@ function formatTimestamp(value: string | Date): string {
 }
 
 function mapUserRow(row: UserRow): UserProfile {
-	return {
+	const profile: UserProfile = {
 		id: row.id,
 		user: row.user,
 		email: row.email,
+		phone: row.phone,
 		createdAt: formatTimestamp(row.created_at),
 		updatedAt: formatTimestamp(row.updated_at),
 	};
+
+	if (row.bio) {
+		profile.bio = row.bio;
+	}
+
+	return profile;
 }
 
 function mapUserBasicRow(row: UserBasicRow): UserBasic {
@@ -103,38 +111,34 @@ function normalizeUserId(userId: string): string {
 	return normalized;
 }
 
-function normalizeOptionalUser(user?: string): string | undefined {
-	if (user === undefined) {
+function normalizeOptionalPhone(phone?: string): string | undefined {
+	if (phone === undefined) {
 		return undefined;
 	}
 
-	const normalized = user.trim();
-	if (!normalized) {
-		throw new UserServiceError('user cannot be empty', 400);
+	const compact = phone.trim().replace(/[\s().-]+/g, '');
+	if (!/^\+?[0-9]{7,20}$/.test(compact)) {
+		throw new UserServiceError('phone must contain 7 to 20 digits and may start with +', 400);
 	}
 
-	if (normalized.length > 250) {
-		throw new UserServiceError('user must be at most 250 characters', 400);
-	}
-
-	return normalized;
+	return compact;
 }
 
-function normalizeOptionalEmail(email?: string): string | undefined {
-	if (email === undefined) {
+function normalizeOptionalBio(bio?: string): string | null | undefined {
+	if (bio === undefined) {
 		return undefined;
 	}
 
-	const normalized = email.trim().toLowerCase();
-	if (!normalized) {
-		throw new UserServiceError('email cannot be empty', 400);
+	const trimmed = bio.trim();
+	if (!trimmed) {
+		return null;
 	}
 
-	if (normalized.length > 250) {
-		throw new UserServiceError('email must be at most 250 characters', 400);
+	if (trimmed.length > 1000) {
+		throw new UserServiceError('bio must be at most 1000 characters', 400);
 	}
 
-	return normalized;
+	return trimmed;
 }
 
 function normalizePage(value?: number): number {
@@ -172,24 +176,17 @@ export async function updateProfile(input: UpdateProfileInput): Promise<UserProf
 		throw new UserServiceError('User not found', 404);
 	}
 
-	const nextUser = normalizeOptionalUser(input.user) ?? existingUser.user;
-	const nextEmail = normalizeOptionalEmail(input.email) ?? existingUser.email;
+	const nextPhone = normalizeOptionalPhone(input.phone) ?? existingUser.phone;
+	const nextBio = normalizeOptionalBio(input.bio);
 
-	if (nextEmail !== existingUser.email) {
-		const userWithEmail = await findUserByEmail(nextEmail);
-		if (userWithEmail && userWithEmail.id !== userId) {
-			throw new UserServiceError('Email already registered', 409);
+	if (nextPhone !== existingUser.phone) {
+		const userWithPhone = await findUserByPhone(nextPhone);
+		if (userWithPhone && userWithPhone.id !== userId) {
+			throw new UserServiceError('Phone already registered', 409);
 		}
 	}
 
-	if (nextUser !== existingUser.user) {
-		const userWithName = await findUserByUser(nextUser);
-		if (userWithName && userWithName.id !== userId) {
-			throw new UserServiceError('Username already registered', 409);
-		}
-	}
-
-	const updatedUser = await updateUserProfile(userId, nextUser, nextEmail);
+	const updatedUser = await updateUserProfile(userId, nextPhone, nextBio ?? existingUser.bio);
 	return mapUserRow(updatedUser);
 }
 
