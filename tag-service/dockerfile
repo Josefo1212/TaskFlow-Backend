@@ -31,4 +31,4 @@ RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 USER appuser
 
 EXPOSE 3005
-CMD ["node", "dist/index.js"]
+CMD ["pnpm", "exec", "pm2-runtime", "start", "dist/index.js", "-i", "1"]
